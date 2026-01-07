@@ -1,0 +1,182 @@
+@page "/journal"
+@using JournalApp.Models
+@using Markdig
+@inject JournalApp.Services.DatabaseService Database
+
+<h3>Create Journal Entry</h3>
+
+<div style="max-width:900px">
+
+    <!-- TITLE -->
+    <label>Title</label><br />
+    <input style="width:100%" @bind="Title" />
+
+    <br /><br />
+
+    <!-- MARKDOWN -->
+    <label>Content (Markdown)</label>
+    <div style="display:flex; gap:10px">
+        <textarea rows="10"
+                  style="width:50%"
+                  @bind="Content"
+                  @bind:event="oninput">
+        </textarea>
+
+        <div style="width:50%; border:1px solid #ccc; padding:10px">
+            @((MarkupString)MarkdownPreview)
+        </div>
+    </div>
+
+    <small>**bold**, *italic*, # Heading, - List, [link](https://example.com)</small>
+
+    <br /><br />
+
+    <!-- MOODS -->
+    <h4>Mood Tracking</h4>
+
+    <label>Primary Mood (Required)</label><br />
+    <select @bind="PrimaryMood" style="width:100%">
+        <option value="">-- Select Primary Mood --</option>
+        @foreach (var mood in AllMoods)
+        {
+            <option>@mood</option>
+        }
+    </select>
+
+    <br /><br />
+
+    <label>Secondary Mood 1</label><br />
+    <select @bind="SecondaryMood1" style="width:100%">
+        <option value="">-- None --</option>
+        @foreach (var mood in AllMoods)
+        {
+            <option>@mood</option>
+        }
+    </select>
+
+    <br /><br />
+
+    <label>Secondary Mood 2</label><br />
+    <select @bind="SecondaryMood2" style="width:100%">
+        <option value="">-- None --</option>
+        @foreach (var mood in AllMoods)
+        {
+            <option>@mood</option>
+        }
+    </select>
+
+    <br /><br />
+
+    <!-- TAGS -->
+    <h4>Tags</h4>
+
+    @foreach (var tag in AllVisibleTags)
+    {
+        <div>
+            <input type="checkbox"
+                   checked="@SelectedTags.Contains(tag)"
+                   @onchange="(e) => ToggleTag(tag, e.Value)" />
+            <label>@tag</label>
+        </div>
+    }
+
+    <br />
+
+    <label>Add Custom Tag</label>
+    <div style="display:flex; gap:10px">
+        <input style="flex:1" @bind="NewTag" />
+        <button type="button" @onclick="AddCustomTag">Add</button>
+    </div>
+
+    <br /><br />
+
+    <button @onclick="SaveEntry">Save Journal Entry</button>
+
+    <p style="color:green">@Message</p>
+
+</div>
+
+@code {
+    private string? Title;
+    private string? Content;
+
+    private string PrimaryMood = "";
+    private string? SecondaryMood1;
+    private string? SecondaryMood2;
+
+    private HashSet<string> SelectedTags =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private string? NewTag;
+    private string Message = "";
+
+    private readonly List<string> AllMoods = new()
+    {
+        "Happy","Excited","Relaxed","Grateful",
+        "Calm","Thoughtful","Bored",
+        "Sad","Stressed","Anxious"
+    };
+
+    private readonly List<string> PredefinedTags = new()
+    {
+        "Work","Studies","Health","Fitness","Travel",
+        "Family","Personal Growth","Hobbies","Coding"
+    };
+
+    private List<string> AllVisibleTags =>
+        PredefinedTags
+            .Union(SelectedTags, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(t => t)
+            .ToList();
+
+    private string MarkdownPreview =>
+        Markdown.ToHtml(Content ?? "");
+
+    private void ToggleTag(string tag, object? value)
+    {
+        if (value is bool b && b)
+            SelectedTags.Add(tag);
+        else
+            SelectedTags.Remove(tag);
+    }
+
+    private void AddCustomTag()
+    {
+        if (string.IsNullOrWhiteSpace(NewTag))
+            return;
+
+        SelectedTags.Add(NewTag.Trim());
+        NewTag = "";
+    }
+
+    private async Task SaveEntry()
+    {
+        if (string.IsNullOrWhiteSpace(PrimaryMood))
+        {
+            Message = "Primary mood is required.";
+            return;
+        }
+
+        var entry = new JournalEntry
+        {
+            EntryDate = DateTime.Today,
+            Title = Title,
+            Content = Content,
+            PrimaryMood = PrimaryMood,
+            SecondaryMood1 = SecondaryMood1,
+            SecondaryMood2 = SecondaryMood2,
+            Tags = string.Join(",", SelectedTags),
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now
+        };
+
+        await Database.SaveEntryAsync(entry);
+
+        Message = "Today's journal entry saved successfully.";
+
+        Title = Content = null;
+        PrimaryMood = "";
+        SecondaryMood1 = SecondaryMood2 = null;
+        SelectedTags.Clear();
+    }
+}

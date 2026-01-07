@@ -1,0 +1,71 @@
+@page "/journals"
+@using JournalApp.Models
+@inject JournalApp.Services.DatabaseService Database
+@inject NavigationManager Nav
+
+<h3>All Journals</h3>
+
+@if (Entries.Count == 0)
+{
+    <p>No journal entries found.</p>
+}
+else
+{
+    <table border="1" cellpadding="8" cellspacing="0" style="width:100%">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Title</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in Entries)
+            {
+                <tr>
+                    <td>@entry.EntryDate.ToString("yyyy-MM-dd")</td>
+                    <td>@entry.Title</td>
+                    <td>
+                        <button @onclick="() => EditEntry(entry.EntryDate)">
+                            Edit
+                        </button>
+
+                        <button style="color:red; margin-left:5px"
+                                @onclick="() => DeleteEntry(entry.EntryDate)">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<JournalEntry> Entries = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEntries();
+    }
+
+    private async Task LoadEntries()
+    {
+        Entries = await Database.GetEntriesAsync();
+        Entries = Entries
+            .OrderByDescending(e => e.EntryDate)
+            .ToList();
+    }
+
+    private void EditEntry(DateTime entryDate)
+    {
+        // Navigate to dedicated edit page
+        Nav.NavigateTo($"/journal/edit/{entryDate:yyyy-MM-dd}");
+    }
+
+    private async Task DeleteEntry(DateTime entryDate)
+    {
+        await Database.DeleteEntryAsync(entryDate);
+        await LoadEntries();
+    }
+}

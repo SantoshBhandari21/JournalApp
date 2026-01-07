@@ -1,0 +1,170 @@
+@page "/journal/edit/{EntryDate:datetime}"
+@using JournalApp.Models
+@using Markdig
+@inject JournalApp.Services.DatabaseService Database
+@inject NavigationManager Nav
+
+<h3>Edit Journal (@EntryDate.ToString("yyyy-MM-dd"))</h3>
+
+@if (Entry == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div style="max-width:900px">
+
+        <label>Title</label><br />
+        <input style="width:100%" @bind="Entry.Title" />
+
+        <br /><br />
+
+        <label>Content (Markdown)</label>
+        <div style="display:flex; gap:10px">
+            <textarea rows="10"
+                      style="width:50%"
+                      @bind="Entry.Content"
+                      @bind:event="oninput">
+            </textarea>
+
+            <div style="width:50%; border:1px solid #ccc; padding:10px">
+                @((MarkupString)Markdown.ToHtml(Entry.Content ?? ""))
+            </div>
+        </div>
+
+        <br />
+
+        <h4>Mood Tracking</h4>
+
+        <label>Primary Mood</label><br />
+        <select @bind="Entry.PrimaryMood" style="width:100%">
+            @foreach (var mood in AllMoods)
+            {
+                <option>@mood</option>
+            }
+        </select>
+
+        <br /><br />
+
+        <label>Secondary Mood 1</label><br />
+        <select @bind="Entry.SecondaryMood1" style="width:100%">
+            <option value="">-- None --</option>
+            @foreach (var mood in AllMoods)
+            {
+                <option>@mood</option>
+            }
+        </select>
+
+        <br /><br />
+
+        <label>Secondary Mood 2</label><br />
+        <select @bind="Entry.SecondaryMood2" style="width:100%">
+            <option value="">-- None --</option>
+            @foreach (var mood in AllMoods)
+            {
+                <option>@mood</option>
+            }
+        </select>
+
+        <br /><br />
+
+        <h4>Tags</h4>
+
+        @foreach (var tag in AllVisibleTags)
+        {
+            <div>
+                <input type="checkbox"
+                       checked="@SelectedTags.Contains(tag)"
+                       @onchange="(e) => ToggleTag(tag, e.Value)" />
+                <label>@tag</label>
+            </div>
+        }
+
+        <br />
+
+        <label>Add Custom Tag</label>
+        <div style="display:flex; gap:10px">
+            <input style="flex:1" @bind="NewTag" />
+            <button type="button" @onclick="AddCustomTag">Add</button>
+        </div>
+
+        <br /><br />
+
+        <button @onclick="UpdateEntry">Update</button>
+        <button style="color:red" @onclick="DeleteEntry">Delete</button>
+
+    </div>
+}
+
+@code {
+    [Parameter] public DateTime EntryDate { get; set; }
+
+    private JournalEntry? Entry;
+
+    private HashSet<string> SelectedTags =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private string? NewTag;
+
+    private readonly List<string> PredefinedTags = new()
+    {
+        "Work","Studies","Health","Fitness","Travel",
+        "Family","Personal Growth","Hobbies","Coding"
+    };
+
+    private readonly List<string> AllMoods = new()
+    {
+        "Happy","Excited","Relaxed","Grateful",
+        "Calm","Thoughtful","Bored",
+        "Sad","Stressed","Anxious"
+    };
+
+    private List<string> AllVisibleTags =>
+        PredefinedTags
+            .Union(SelectedTags, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(t => t)
+            .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var entries = await Database.GetEntriesAsync();
+        Entry = entries.FirstOrDefault(e => e.EntryDate == EntryDate);
+
+        if (Entry?.Tags == null) return;
+
+        foreach (var tag in Entry.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
+            SelectedTags.Add(tag.Trim());
+    }
+
+    private void ToggleTag(string tag, object? value)
+    {
+        if (value is bool b && b)
+            SelectedTags.Add(tag);
+        else
+            SelectedTags.Remove(tag);
+    }
+
+    private void AddCustomTag()
+    {
+        if (string.IsNullOrWhiteSpace(NewTag))
+            return;
+
+        SelectedTags.Add(NewTag.Trim());
+        NewTag = "";
+    }
+
+    private async Task UpdateEntry()
+    {
+        Entry!.Tags = string.Join(",", SelectedTags);
+        Entry.UpdatedAt = DateTime.Now;
+
+        await Database.SaveEntryAsync(Entry);
+        Nav.NavigateTo("/journals");
+    }
+
+    private async Task DeleteEntry()
+    {
+        await Database.DeleteEntryAsync(Entry!.EntryDate);
+        Nav.NavigateTo("/journals");
+    }
+}

@@ -1,0 +1,30 @@
+@page "/"
+@using JournalApp.Models
+@inject JournalApp.Services.DatabaseService Database
+
+<h3>Dashboard</h3>
+
+<p><b>Total Entries:</b> @TotalEntries</p>
+<p><b>Last Entry Date:</b> @LastDate</p>
+<p><b>Most Common Mood:</b> @MostCommonMood</p>
+
+@code {
+    private int TotalEntries;
+    private string LastDate = "-";
+    private string MostCommonMood = "-";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var entries = await Database.GetEntriesAsync();
+        TotalEntries = entries.Count;
+
+        if (entries.Any())
+        {
+            LastDate = entries.Max(e => e.EntryDate).ToString("yyyy-MM-dd");
+            MostCommonMood = entries
+                .GroupBy(e => e.PrimaryMood)
+                .OrderByDescending(g => g.Count())
+                .First().Key;
+        }
+    }
+}
