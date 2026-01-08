@@ -1,9 +1,36 @@
 ﻿@inherits LayoutComponentBase
 
-<div>
-    <NavMenu />
-</div>
+<style>
+    .app-shell {
+        display: flex;
+        min-height: 100vh;
+        background: #f8fafc; /* light page background */
+    }
 
-<div style="padding:20px">
-    @Body
+    .content-area {
+        flex: 1;
+        padding: 16px;
+    }
+
+    /* Keep your pages nicely centered like before */
+    .content-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    {
+        flex-direction: column;
+    }
+
+    }
+</style>
+
+<div class="app-shell">
+    <NavMenu />
+
+    <main class="content-area">
+        <div class="content-inner">
+            @Body
+        </div>
+    </main>
 </div>

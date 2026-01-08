@@ -1,99 +1,284 @@
-@page "/journal"
+﻿@page "/journal"
+
 @using JournalApp.Models
 @using Markdig
 @inject JournalApp.Services.DatabaseService Database
 
-<h3>Create Journal Entry</h3>
-
-<div style="max-width:900px">
-
-    <!-- TITLE -->
-    <label>Title</label><br />
-    <input style="width:100%" @bind="Title" />
-
-    <br /><br />
-
-    <!-- MARKDOWN -->
-    <label>Content (Markdown)</label>
-    <div style="display:flex; gap:10px">
-        <textarea rows="10"
-                  style="width:50%"
-                  @bind="Content"
-                  @bind:event="oninput">
-        </textarea>
-
-        <div style="width:50%; border:1px solid #ccc; padding:10px">
-            @((MarkupString)MarkdownPreview)
-        </div>
-    </div>
-
-    <small>**bold**, *italic*, # Heading, - List, [link](https://example.com)</small>
-
-    <br /><br />
-
-    <!-- MOODS -->
-    <h4>Mood Tracking</h4>
-
-    <label>Primary Mood (Required)</label><br />
-    <select @bind="PrimaryMood" style="width:100%">
-        <option value="">-- Select Primary Mood --</option>
-        @foreach (var mood in AllMoods)
-        {
-            <option>@mood</option>
-        }
-    </select>
-
-    <br /><br />
-
-    <label>Secondary Mood 1</label><br />
-    <select @bind="SecondaryMood1" style="width:100%">
-        <option value="">-- None --</option>
-        @foreach (var mood in AllMoods)
-        {
-            <option>@mood</option>
-        }
-    </select>
-
-    <br /><br />
-
-    <label>Secondary Mood 2</label><br />
-    <select @bind="SecondaryMood2" style="width:100%">
-        <option value="">-- None --</option>
-        @foreach (var mood in AllMoods)
-        {
-            <option>@mood</option>
-        }
-    </select>
-
-    <br /><br />
-
-    <!-- TAGS -->
-    <h4>Tags</h4>
-
-    @foreach (var tag in AllVisibleTags)
-    {
-        <div>
-            <input type="checkbox"
-                   checked="@SelectedTags.Contains(tag)"
-                   @onchange="(e) => ToggleTag(tag, e.Value)" />
-            <label>@tag</label>
-        </div>
+<style>
+    /* Lightweight, clean look */
+    .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 12px;
     }
 
-    <br />
+    .header {
+        margin-bottom: 12px;
+    }
 
-    <label>Add Custom Tag</label>
-    <div style="display:flex; gap:10px">
-        <input style="flex:1" @bind="NewTag" />
-        <button type="button" @onclick="AddCustomTag">Add</button>
+        .header h3 {
+            margin: 0;
+            font-size: 1.45rem;
+        }
+
+    .muted {
+        color: #6b7280;
+        font-size: .95rem;
+        margin-top: 4px;
+    }
+
+    .panel {
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 14px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    @@media (min-width: 900px) {
+        .grid {
+            grid-template-columns: 1.2fr .8fr;
+        }
+    }
+
+    .field {
+        margin-bottom: 10px;
+    }
+
+        .field label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+            color: #111827;
+        }
+
+    .input, .select, .textarea {
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        padding: 10px 12px;
+        outline: none;
+        background: #f9fafb;
+        color: #111827;
+    }
+
+    .textarea {
+        min-height: 200px;
+        resize: vertical;
+    }
+
+        .input:focus, .select:focus, .textarea:focus {
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.35);
+            background: #ffffff;
+        }
+
+    .split {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    @@media (min-width: 900px) {
+        .split {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    .preview {
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 10px;
+        min-height: 200px;
+        overflow: auto;
+    }
+
+    .section-title {
+        margin: 12px 0 8px;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border: 1px solid #e5e7eb;
+        background: #f3f4f6;
+        border-radius: 999px;
+        font-size: .92rem;
+        color: #111827;
+    }
+
+    .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+        .row input {
+            flex: 1;
+        }
+
+    .btn {
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        padding: 9px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        color: #111827;
+    }
+
+        .btn:hover {
+            background: #f9fafb;
+        }
+
+    .btn-primary {
+        border-color: #93c5fd;
+        background: #eff6ff;
+    }
+
+        .btn-primary:hover {
+            background: #dbeafe;
+        }
+
+    .status {
+        margin-top: 10px;
+        font-weight: 600;
+    }
+
+    .ok {
+        color: #15803d;
+    }
+    /* green */
+    .warn {
+        color: #b45309;
+    }
+    /* amber */
+</style>
+
+<div class="wrap">
+    <div class="header">
+        <h3>Journal Entry</h3>
+        <div class="muted">Write your entry, select your mood and add tags.</div>
     </div>
 
-    <br /><br />
+    <div class="grid">
+        <!-- LEFT: Title + Editor + Preview -->
+        <div class="panel">
+            <div class="field">
+                <label>Title</label>
+                <input class="input" placeholder="Title..." @bind="Title" />
+            </div>
 
-    <button @onclick="SaveEntry">Save Journal Entry</button>
+            <div class="section-title">Content (Markdown)</div>
 
-    <p style="color:green">@Message</p>
+            <div class="split">
+                <div>
+                    <textarea class="textarea"
+                              placeholder="Write here..."
+                              @bind="Content"
+                              @bind:event="oninput"></textarea>
+                    <div class="muted">Tip: **bold**, *italic*, # Heading, - List, link=(https://....com)</div>
+                </div>
 
+                <div>
+                    <div class="preview">
+                        @((MarkupString)MarkdownPreview)
+                    </div>
+                    <div class="muted">Live Preview</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Mood + Tags + Save -->
+        <div class="panel">
+            <div class="section-title">Mood Tracking</div>
+
+            <div class="field">
+                <label>Primary Mood (Required)</label>
+                <select class="select" @bind="PrimaryMood">
+                    <option value="">-- Select Primary Mood --</option>
+                    @foreach (var mood in AllMoods)
+                    {
+                        <option>@mood</option>
+                    }
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Secondary Mood 1</label>
+                <select class="select" @bind="SecondaryMood1">
+                    <option value="">-- None --</option>
+                    @foreach (var mood in AllMoods)
+                    {
+                        <option>@mood</option>
+                    }
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Secondary Mood 2</label>
+                <select class="select" @bind="SecondaryMood2">
+                    <option value="">-- None --</option>
+                    @foreach (var mood in AllMoods)
+                    {
+                        <option>@mood</option>
+                    }
+                </select>
+            </div>
+
+            <div class="section-title">Tags</div>
+
+            <div class="tags">
+                @foreach (var tag in AllVisibleTags)
+                {
+                    <label class="tag">
+                        <input type="checkbox"
+                               checked="@SelectedTags.Contains(tag)"
+                               @onchange="(e) => ToggleTag(tag, e.Value)" />
+                        <span>@tag</span>
+                    </label>
+                }
+            </div>
+
+            <div class="section-title">Add Custom Tag</div>
+
+            <div class="row">
+                <input class="input" placeholder="e.g. Music" @bind="NewTag" />
+                <button type="button" class="btn" @onclick="AddCustomTag">Add</button>
+            </div>
+
+            <div style="margin-top: 12px;">
+                <button class="btn btn-primary" @onclick="SaveEntry">Save Journal Entry</button>
+
+                @if (!string.IsNullOrWhiteSpace(Message))
+                {
+                    <div class="status @(Message.Contains("required", StringComparison.OrdinalIgnoreCase) ? "warn" : "ok")">
+                        @Message
+                    </div>
+                }
+            </div>
+
+            <div class="muted" style="margin-top:10px;">
+                Saved date: <b>@DateTime.Today.ToString("yyyy-MM-dd")</b>
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
