@@ -1,10 +1,11 @@
 ﻿@inherits LayoutComponentBase
+@inject JournalApp.Services.ThemeService Theme
 
 <style>
     .app-shell {
         display: flex;
         min-height: 100vh;
-        background: #f8fafc; /* light page background */
+        background: var(--bg);
     }
 
     .content-area {
@@ -18,14 +19,14 @@
         margin: 0 auto;
     }
 
-    {
-        flex-direction: column;
-    }
-
+    @@media (max-width: 820px) {
+        .app-shell {
+            flex-direction: column;
+        }
     }
 </style>
 
-<div class="app-shell">
+<div class="app-shell @(Theme.CurrentTheme == "dark" ? "theme-dark" : "")">
     <NavMenu />
 
     <main class="content-area">
@@ -34,3 +35,16 @@
         </div>
     </main>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Theme.Load();
+        Theme.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        Theme.OnChange -= StateHasChanged;
+    }
+}

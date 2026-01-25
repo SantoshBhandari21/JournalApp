@@ -16,6 +16,7 @@ namespace JournalApp
 
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddSingleton<DatabaseService>();
+            builder.Services.AddSingleton<ThemeService>();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
