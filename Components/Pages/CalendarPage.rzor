@@ -1,0 +1,117 @@
+﻿@page "/calendar"
+
+@using JournalApp.Models
+@inject JournalApp.Services.DatabaseService Database
+@inject NavigationManager Nav
+
+<h2>📅 Calendar</h2>
+
+<div class="calendar-header">
+    <button class="btn secondary" @onclick="PreviousMonth">Previous Month</button>
+
+    <h3>@CurrentMonth.ToString("MMMM yyyy")</h3>
+
+    <button class="btn secondary" @onclick="NextMonth">Next Month</button>
+</div>
+
+<div class="calendar-grid">
+
+    @foreach (var dayName in DayNames)
+    {
+        <div class="calendar-day header">@dayName</div>
+    }
+
+    @foreach (var day in CalendarDays)
+    {
+        <div class="calendar-day @(day.HasEntry ? "has-entry" : "")"
+             @onclick="() => OpenDay(day.Date)">
+            
+            @if (day.Date != null)
+            {
+                <span class="day-number">@day.Date.Value.Day</span>
+
+                @if (day.HasEntry)
+                {
+                    <span class="entry-dot"></span>
+                }
+            }
+        </div>
+    }
+
+</div>
+
+@code {
+
+    private DateTime CurrentMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+    private List<CalendarDay> CalendarDays = new();
+
+    private readonly string[] DayNames =
+    {
+        "Sun","Mon","Tue","Wed","Thu","Fri","Sat"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCalendar();
+    }
+
+    private async Task LoadCalendar()
+    {
+        CalendarDays.Clear();
+
+        var entries = await Database.GetEntriesAsync();
+        var entryDates = entries
+            .Select(e => e.EntryDate.Date)
+            .ToHashSet();
+
+        var firstDayOfMonth = new DateTime(CurrentMonth.Year, CurrentMonth.Month, 1);
+        var daysInMonth = DateTime.DaysInMonth(CurrentMonth.Year, CurrentMonth.Month);
+
+        int startOffset = (int)firstDayOfMonth.DayOfWeek;
+
+        // Empty cells before first day
+        for (int i = 0; i < startOffset; i++)
+        {
+            CalendarDays.Add(new CalendarDay());
+        }
+
+        // Actual days
+        for (int day = 1; day <= daysInMonth; day++)
+        {
+            var date = new DateTime(CurrentMonth.Year, CurrentMonth.Month, day);
+
+            CalendarDays.Add(new CalendarDay
+            {
+                Date = date,
+                HasEntry = entryDates.Contains(date)
+            });
+        }
+    }
+
+    private async Task PreviousMonth()
+    {
+        CurrentMonth = CurrentMonth.AddMonths(-1);
+        await LoadCalendar();
+    }
+
+    private async Task NextMonth()
+    {
+        CurrentMonth = CurrentMonth.AddMonths(1);
+        await LoadCalendar();
+    }
+
+    private void OpenDay(DateTime? date)
+    {
+        if (date == null)
+            return;
+
+        Nav.NavigateTo($"/journal/edit/{date:yyyy-MM-dd}");
+    }
+
+    private class CalendarDay
+    {
+        public DateTime? Date { get; set; }
+        public bool HasEntry { get; set; }
+    }
+}
