@@ -1,0 +1,85 @@
+﻿@page "/settings"
+
+@inject JournalApp.Services.ThemeService Theme
+@inject JournalApp.Data.JournalService JournalService
+@inject IJSRuntime JS
+
+<h2>Settings</h2>
+
+<!-- ================= THEME ================= -->
+<div class="card">
+    <h3>Theme</h3>
+
+    <label>
+        <input type="checkbox"
+               checked="@(Theme.CurrentTheme == "dark")"
+               @onchange="ToggleTheme" />
+        Dark Mode
+    </label>
+</div>
+
+<!-- ================= DATA MANAGEMENT ================= -->
+<div class="card danger-zone">
+    <h3>Data Management</h3>
+
+    <button class="btn danger" @onclick="ShowConfirm">
+        Clear All Journal Data
+    </button>
+
+    <p class="warning-text">
+        Warning: This action will permanently delete all journal entries.
+    </p>
+</div>
+
+<!-- ================= CONFIRM POPUP ================= -->
+@if (ShowConfirmPopup)
+{
+    <div class="modal-overlay">
+        <div class="modal-box">
+            <h3>⚠ Confirm Action</h3>
+            <p>Are you sure you want to delete all journal entries?</p>
+
+            <div class="actions">
+                <button class="btn danger" @onclick="ClearAllData">
+                    Yes, Delete
+                </button>
+
+                <button class="btn secondary" @onclick="HideConfirm">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool ShowConfirmPopup = false;
+
+    private void ToggleTheme(ChangeEventArgs _)
+    {
+        Theme.Toggle();
+    }
+
+    private void ShowConfirm()
+    {
+        ShowConfirmPopup = true;
+    }
+
+    private void HideConfirm()
+    {
+        ShowConfirmPopup = false;
+    }
+
+    private async Task ClearAllData()
+    {
+        var all = await JournalService.GetAllAsync();
+
+        foreach (var entry in all)
+        {
+            await JournalService.DeleteByDateAsync(entry.EntryDate);
+        }
+
+        ShowConfirmPopup = false;
+        await JS.InvokeVoidAsync("alert", "All journal data has been deleted.");
+    }
+}

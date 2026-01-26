@@ -1,56 +1,119 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">JournalApp</a>
+﻿@inject JournalApp.Services.ThemeService Theme
+
+<style>
+    .sidebar {
+        width: 260px;
+        background: #0f172a;
+        color: #e5e7eb;
+        border-right: 1px solid rgba(255,255,255,0.06);
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 10px 14px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        margin-bottom: 12px;
+    }
+
+    .logo {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: rgba(59,130,246,0.18);
+        border: 1px solid rgba(59,130,246,0.28);
+        display: grid;
+        place-items: center;
+        font-weight: 900;
+        color: #93c5fd;
+        user-select: none;
+    }
+
+    .brand-title {
+        font-weight: 900;
+        color: #ffffff;
+    }
+
+    .nav {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding-top: 6px;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        text-decoration: none;
+        color: rgba(229,231,235,0.92);
+        border: 1px solid transparent;
+        font-weight: 700;
+        font-size: .95rem;
+    }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.08);
+            color: #ffffff;
+        }
+
+        .nav-item.active {
+            background: rgba(59,130,246,0.18);
+            border-color: rgba(59,130,246,0.35);
+            color: #bfdbfe;
+        }
+
+    .spacer {
+        flex: 1;
+    }
+
+    .theme-btn {
+        width: 100%;
+        margin-top: 12px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.06);
+        color: #e5e7eb;
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-weight: 800;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+        .theme-btn:hover {
+            background: rgba(255,255,255,0.10);
+        }
+</style>
+
+<aside class="sidebar">
+    <div class="brand">
+        <div class="logo">J</div>
+        <div class="brand-title">JournalApp</div>
     </div>
-</div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
-                Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="journal">
-                <span class="bi bi-journal-text-nav-menu" aria-hidden="true"></span>
-                Journal
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="journals">
-                <span class="bi bi-journal-text-nav-menu" aria-hidden="true"></span>
-                All Journals
-            </NavLink>
-        </div>
-
-        <!-- NEW SEARCH BUTTON -->
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="search">
-                <span class="bi bi-search-nav-menu" aria-hidden="true"></span>
-                Search
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span>
-                Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span>
-                Weather
-            </NavLink>
-        </div>
-
+    <nav class="nav" aria-label="Main navigation">
+        <NavLink class="nav-item" href="/" Match="NavLinkMatch.All">🏠 Dashboard</NavLink>
+        <NavLink class="nav-item" href="/journal">✍ Journal Entry</NavLink>
+        <NavLink class="nav-item" href="/journals">📚 Journal List</NavLink>
+        <NavLink class="nav-item" href="/settings">⚙ Settings</NavLink>
     </nav>
-</div>
+
+    <div class="spacer"></div>
+
+    <button type="button" class="theme-btn" @onclick="Theme.Toggle">
+        @(Theme.CurrentTheme == "dark" ? "☀ Light Mode" : "🌙 Dark Mode")
+    </button>
+</aside>
