@@ -1,50 +1,47 @@
 ﻿@inherits LayoutComponentBase
-@inject JournalApp.Services.ThemeService Theme
+@inject IJSRuntime JS
 
-<style>
-    .app-shell {
-        display: flex;
-        min-height: 100vh;
-        background: var(--bg);
-    }
-
-    .content-area {
-        flex: 1;
-        padding: 16px;
-    }
-
-    /* Keep your pages nicely centered like before */
-    .content-inner {
-        max-width: 1100px;
-        margin: 0 auto;
-    }
-
-    @@media (max-width: 820px) {
-        .app-shell {
-            flex-direction: column;
-        }
-    }
-</style>
-
-<div class="app-shell @(Theme.CurrentTheme == "dark" ? "theme-dark" : "")">
+<div class="layout">
     <NavMenu />
 
-    <main class="content-area">
-        <div class="content-inner">
-            @Body
-        </div>
+    <main class="content">
+        @Body
     </main>
 </div>
 
 @code {
-    protected override void OnInitialized()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        Theme.Load();
-        Theme.OnChange += StateHasChanged;
-    }
-
-    public void Dispose()
-    {
-        Theme.OnChange -= StateHasChanged;
+        if (firstRender)
+        {
+            // Apply saved theme ONCE at app startup
+            var isDark = Preferences.Get("dark_theme", false);
+            await JS.InvokeVoidAsync("toggleTheme", isDark);
+        }
     }
 }
+
+<style>
+    .layout {
+        display: flex;
+        height: 100vh;
+    }
+
+    .content {
+        flex: 1;
+        padding: 30px;
+        overflow-y: auto;
+        background-color: #f9f9f9;
+        transition: background-color 0.3s ease;
+    }
+
+    /* Light theme (default) */
+    body:not(.dark-theme) .content {
+        background-color: #f9f9f9;
+    }
+
+    /* Dark theme */
+    body.dark-theme .content {
+        background-color: #0f172a;
+    }
+</style>

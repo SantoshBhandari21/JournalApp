@@ -1,0 +1,544 @@
+﻿@page "/journal"
+
+@using JournalApp.Models
+@inject JournalApp.Services.DatabaseService Database
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<!-- =========================================================
+     Journal Entry Page
+     - Purpose: Create a daily journal entry with mood and tags.
+     - UI: Light theme for readability and professional look.
+     - Feature: Supports Primary mood + 2 secondary moods.
+     - Storage: Secondary moods are saved inside Tags to avoid DB changes.
+   ========================================================= -->
+
+<div class="page">
+
+    <div class="page-head">
+        <h2 class="page-title">Daily Journal</h2>
+        <p class="page-subtitle">Write your entry, select moods and add tags.</p>
+    </div>
+
+    <!-- Center popup modal -->
+    @if (ShowPopup)
+    {
+        <div class="modal-overlay" role="dialog" aria-modal="true">
+            <div class="modal-box">
+                <h3>Message</h3>
+                <p>@PopupMessage</p>
+                <button class="btn primary" @onclick="ClosePopup" type="button">OK</button>
+            </div>
+        </div>
+    }
+
+    <div class="grid">
+
+        <!-- Journal content -->
+        <div class="card">
+            <h3 class="card-title">Entry Details</h3>
+
+            <div class="field">
+                <label class="label">Title <span class="req">*</span></label>
+                <input class="input" @bind="Title" placeholder="Short title for your entry" />
+            </div>
+
+            <div class="field">
+                <label class="label">Content <span class="req">*</span></label>
+
+                <div class="editor-toolbar">
+                    <button class="tool @BoldClass" type="button" @onclick="ToggleBold"><b>B</b></button>
+                    <button class="tool @ItalicClass" type="button" @onclick="ToggleItalic"><i>I</i></button>
+                    <button class="tool @HeadingClass" type="button" @onclick="ToggleHeading">H</button>
+                    <button class="tool @ListClass" type="button" @onclick="ToggleList">List</button>
+                </div>
+
+                <div id="editor"
+                     class="wysiwyg-editor"
+                     contenteditable="true"
+                     @onclick="SyncState"
+                     @onkeyup="SyncState">
+                </div>
+            </div>
+        </div>
+
+        <!-- Mood + Tags -->
+        <div class="side">
+
+            <!-- Moods -->
+            <div class="card">
+                <h3 class="card-title">Mood Tracking</h3>
+
+                if - Adaptive
+                <div class="field">
+                    <label class="label">Primary Mood <span class="req">*</span></label>
+                    <select class="input" @bind="PrimaryMood">
+                        <option value="">Select mood</option>
+                        @foreach (var mood in AllMoods)
+                        {
+                            <option>@mood</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label class="label">Secondary Mood 1 <span class="req">*</span></label>
+                    <select class="input" @bind="SecondaryMood1">
+                        <option value="">Select mood</option>
+                        @foreach (var mood in AllMoods)
+                        {
+                            <option>@mood</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label class="label">Secondary Mood 2 <span class="req">*</span></label>
+                    <select class="input" @bind="SecondaryMood2">
+                        <option value="">Select mood</option>
+                        @foreach (var mood in AllMoods)
+                        {
+                            <option>@mood</option>
+                        }
+                    </select>
+                </div>
+
+            </div>
+
+            <!-- Tags -->
+            <div class="card">
+                <h3 class="card-title">Tags <span class="req">*</span></h3>
+
+                <div class="tags">
+                    @foreach (var tag in AllVisibleTags)
+                    {
+                        <label class="tag">
+                            <input type="checkbox"
+                                   checked="@SelectedTags.Contains(tag)"
+                                   @onchange="() => ToggleTag(tag)" />
+                            <span>@tag</span>
+                        </label>
+                    }
+                </div>
+
+                <div class="custom-tag">
+                    <input class="input"
+                           placeholder="Add custom tag"
+                           @bind="NewTag" />
+
+                    <button class="btn secondary"
+                            type="button"
+                            @onclick="AddCustomTag">
+                        Add
+                    </button>
+                </div>
+            </div>
+
+            <!-- Save -->
+            <div class="actions">
+                <button class="btn primary" @onclick="SaveEntry" type="button">
+                    Save Journal
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    /* =========================================================
+           Journal Page UI (Light Theme)
+           - Clean and readable on white content area.
+           ========================================================= */
+
+    .page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 22px 22px 34px;
+        color: #0f172a;
+    }
+
+    .page-head {
+        margin-bottom: 14px;
+    }
+
+    .page-title {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: .2px;
+    }
+
+    .page-subtitle {
+        margin: 6px 0 0;
+        color: #475569;
+        font-weight: 600;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 14px;
+        align-items: start;
+    }
+
+    .card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: 0 14px 34px rgba(15,23,42,.10);
+    }
+
+    .card-title {
+        margin: 0 0 12px;
+        font-weight: 900;
+        font-size: 16px;
+        letter-spacing: .2px;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 12px;
+    }
+
+    .label {
+        font-weight: 800;
+        font-size: 13px;
+    }
+
+    .req {
+        color: #ef4444;
+        font-weight: 900;
+    }
+
+    .input {
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: #0f172a;
+        border-radius: 12px;
+        padding: 10px 12px;
+        outline: none;
+        box-shadow: 0 6px 18px rgba(15,23,42,.06);
+    }
+
+        .input:focus {
+            border-color: rgba(59,130,246,.6);
+            box-shadow: 0 0 0 4px rgba(59,130,246,.14);
+        }
+
+    .hint {
+        margin: 6px 0 0;
+        color: #64748b;
+        font-size: 12.5px;
+        font-weight: 600;
+    }
+
+    /* Editor */
+    .editor-toolbar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .tool {
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: #0f172a;
+        border-radius: 10px;
+        padding: 6px 10px;
+        cursor: pointer;
+        font-weight: 800;
+        box-shadow: 0 10px 26px rgba(15,23,42,.08);
+    }
+
+        .tool:hover {
+            transform: translateY(-1px);
+        }
+
+        .tool.active {
+            border-color: rgba(59,130,246,.55);
+            box-shadow: 0 0 0 3px rgba(59,130,246,.12) inset;
+            background: rgba(59,130,246,.08);
+        }
+
+    .wysiwyg-editor {
+        min-height: 220px;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 12px;
+        background: #ffffff;
+        box-shadow: 0 6px 18px rgba(15,23,42,.06);
+        outline: none;
+        line-height: 1.5;
+    }
+
+    /* Tags */
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        background: #f8fafc;
+    }
+
+    .tag {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        background: #fff;
+        cursor: pointer;
+        user-select: none;
+        font-weight: 700;
+    }
+
+    .custom-tag {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+    /* Buttons */
+    .btn {
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: #0f172a;
+        border-radius: 12px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 900;
+        box-shadow: 0 10px 26px rgba(15,23,42,.08);
+        transition: transform .08s ease, filter .08s ease;
+        white-space: nowrap;
+    }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.02);
+        }
+
+        .btn.primary {
+            border-color: rgba(59,130,246,.45);
+            background: rgba(59,130,246,.10);
+        }
+
+        .btn.secondary {
+            background: #fff;
+        }
+
+    .actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 12px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15,23,42,.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        z-index: 999;
+    }
+
+    .modal-box {
+        width: min(420px, 100%);
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: 0 20px 60px rgba(15,23,42,.25);
+    }
+
+    .modal-title {
+        margin: 0 0 6px;
+        font-weight: 900;
+        color: #0f172a;
+    }
+
+    .modal-text {
+        margin: 0 0 12px;
+        color: #475569;
+        font-weight: 600;
+    }
+
+    @@media (max-width: 900px) {
+        .grid
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .actions {
+        justify-content: stretch;
+    }
+
+    .btn.primary {
+        width: 100%;
+    }
+
+    }
+</style>
+
+@code {
+
+    private bool ShowPopup = false;
+    private string PopupMessage = "";
+    private string? Title;
+    private string? Content;
+
+    private string PrimaryMood = "";
+    private string SecondaryMood1 = "";
+    private string SecondaryMood2 = "";
+
+    private HashSet<string> SelectedTags = new(StringComparer.OrdinalIgnoreCase);
+    private string? NewTag;
+
+    private readonly List<string> PredefinedTags = new()
+    {
+        "Work","Studies","Health","Fitness","Travel",
+        "Family","Personal Growth","Hobbies","Coding"
+    };
+
+    private List<string> AllVisibleTags =>
+        PredefinedTags.Union(SelectedTags).OrderBy(t => t).ToList();
+
+    private readonly List<string> AllMoods = new()
+    {
+        "Happy","Excited","Relaxed","Grateful",
+        "Calm","Thoughtful","Bored",
+        "Sad","Stressed","Anxious"
+    };
+
+    /* Toolbar state */
+    private bool isBold;
+    private bool isItalic;
+    private bool isHeading;
+    private bool isList;
+
+    private string BoldClass => isBold ? "active" : "";
+    private string ItalicClass => isItalic ? "active" : "";
+    private string HeadingClass => isHeading ? "active" : "";
+    private string ListClass => isList ? "active" : "";
+
+    private async Task ToggleBold()
+    {
+        await JS.InvokeVoidAsync("editorToggle", "bold");
+        await SyncState();
+    }
+
+    private async Task ToggleItalic()
+    {
+        await JS.InvokeVoidAsync("editorToggle", "italic");
+        await SyncState();
+    }
+
+    private async Task ToggleHeading()
+    {
+        await JS.InvokeVoidAsync("editorToggle", "heading");
+        await SyncState();
+    }
+
+    private async Task ToggleList()
+    {
+        await JS.InvokeVoidAsync("editorToggle", "list");
+        await SyncState();
+    }
+
+    private async Task SyncState()
+    {
+        var state = await JS.InvokeAsync<EditorState>("getEditorState");
+        isBold = state.bold;
+        isItalic = state.italic;
+        isHeading = state.heading;
+        isList = state.list;
+    }
+
+    private class EditorState
+    {
+        public bool bold { get; set; }
+        public bool italic { get; set; }
+        public bool heading { get; set; }
+        public bool list { get; set; }
+    }
+
+    private void ToggleTag(string tag)
+    {
+        if (!SelectedTags.Add(tag))
+            SelectedTags.Remove(tag);
+    }
+
+    private void AddCustomTag()
+    {
+        if (!string.IsNullOrWhiteSpace(NewTag))
+        {
+            SelectedTags.Add(NewTag.Trim());
+            NewTag = "";
+        }
+    }
+
+    private async Task SaveEntry()
+    {
+        Content = await JS.InvokeAsync<string>("getEditorContent");
+
+        // Validate required fields.
+        if (string.IsNullOrWhiteSpace(Title)
+            || string.IsNullOrWhiteSpace(Content)
+            || string.IsNullOrWhiteSpace(PrimaryMood)
+            || string.IsNullOrWhiteSpace(SecondaryMood1)
+            || string.IsNullOrWhiteSpace(SecondaryMood2)
+            || SelectedTags.Count == 0)
+        {
+            PopupMessage = "Please fill all required fields.";
+            ShowPopup = true;
+            return;
+        }
+        // ✅ Check if today's entry already exists
+        var existing = await Database.GetEntriesAsync();
+        bool alreadySavedToday = existing
+            .Any(e => e.EntryDate.Date == DateTime.Today);
+
+        if (alreadySavedToday)
+        {
+            PopupMessage = "You have already saved your journal entry for today. Please come back tomorrow.";
+            ShowPopup = true;
+            return;
+        }
+
+        // Store secondary moods inside tags to avoid changing database schema.
+        var finalTags = new HashSet<string>(SelectedTags, StringComparer.OrdinalIgnoreCase)
+        {
+            $"Mood:{SecondaryMood1.Trim()}",
+            $"Mood:{SecondaryMood2.Trim()}"
+        };
+
+        await Database.SaveEntryAsync(new JournalEntry
+        {
+            EntryDate = DateTime.Today,
+            Title = Title,
+            Content = Content,
+            PrimaryMood = PrimaryMood,
+            Tags = string.Join(",", finalTags),
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now
+        });
+
+        Nav.NavigateTo("/journals");
+    }
+
+    private void ClosePopup()
+    {
+        ShowPopup = false;
+    }
+}

@@ -1,0 +1,394 @@
+﻿@page "/journals"
+
+@using JournalApp.Models
+@inject JournalApp.Services.DatabaseService Database
+@inject JournalApp.Services.PdfExportService PdfService
+@inject NavigationManager Nav
+
+<!-- Journal List Page
+     - Purpose: Search, filter, view, edit, delete, export entries.-->
+
+<div class="page">
+    <div class="head">
+        <h2 class="title">Journal List</h2>
+        <p class="sub">Find entries by keyword, date range, mood or tags.</p>
+    </div>
+
+    <div class="card">
+        <div class="topbar">
+            <input class="input" placeholder="Search title or content" @bind="SearchText" />
+            <button class="btn primary" type="button" @onclick="ApplyFilters">Search</button>
+        </div>
+
+        <div class="filters">
+            <select class="input" @bind="SelectedDateRange">
+                <option value="All">All Time</option>
+                <option value="7">Last 7 Days</option>
+                <option value="30">Last 30 Days</option>
+            </select>
+
+            <select class="input" @bind="SelectedMood">
+                <option value="">All Moods</option>
+                @foreach (var mood in AllMoods)
+                {
+                    <option>@mood</option>
+                }
+            </select>
+
+            <select class="input" @bind="SelectedTag">
+                <option value="">All Tags</option>
+                @foreach (var tag in AllTags)
+                {
+                    <option>@tag</option>
+                }
+            </select>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(ExportMessage))
+        {
+            <div class="msg">@ExportMessage</div>
+        }
+    </div>
+
+    @if (FilteredEntries.Count == 0)
+    {
+        <div class="card" style="margin-top:14px;">
+            <p class="empty">No journal entries found.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card" style="margin-top:14px;">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th style="width:140px;">Date</th>
+                        <th>Title</th>
+                        <th style="width:340px;">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var entry in FilteredEntries)
+                    {
+                        <tr>
+                            <td class="mono">@entry.EntryDate.ToString("yyyy-MM-dd")</td>
+                            <td class="tt">@((entry.Title ?? "-"))</td>
+                            <td>
+                                <div class="acts">
+                                    <button class="btn" type="button" @onclick="() => EditEntry(entry.EntryDate)">Edit</button>
+                                    <button class="btn danger" type="button" @onclick="() => DeleteEntry(entry.EntryDate)">Delete</button>
+                                    <button class="btn primary" type="button" @onclick="() => ExportSingle(entry)">Export</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<style>
+
+    .page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 22px 22px 34px;
+        color: #0f172a
+    }
+
+    .head {
+        margin-bottom: 14px
+    }
+
+    .title {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 900
+    }
+
+    .sub {
+        margin: 6px 0 0;
+        color: #475569;
+        font-weight: 600
+    }
+
+    .card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: 0 14px 34px rgba(15,23,42,.10)
+    }
+
+    .topbar {
+        display: flex;
+        gap: 10px;
+        align-items: center
+    }
+
+    .filters {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: 10px;
+        margin-top: 10px
+    }
+
+    .input {
+        width: 100%;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 10px 12px;
+        outline: none;
+        box-shadow: 0 6px 18px rgba(15,23,42,.06)
+    }
+
+        .input:focus {
+            border-color: rgba(59,130,246,.6);
+            box-shadow: 0 0 0 4px rgba(59,130,246,.14)
+        }
+
+    .btn {
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        border-radius: 12px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 900;
+        box-shadow: 0 10px 26px rgba(15,23,42,.08);
+        white-space: nowrap
+    }
+
+        .btn.primary {
+            border-color: rgba(59,130,246,.45);
+            background: rgba(59,130,246,.10)
+        }
+
+        .btn.danger {
+            border-color: rgba(239,68,68,.45);
+            background: rgba(239,68,68,.10)
+        }
+
+        .btn:hover {
+            transform: translateY(-1px)
+        }
+
+    .msg {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        background: #f8fafc;
+        color: #0f172a;
+        font-weight: 700
+    }
+
+    .tbl {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px
+    }
+
+    thead th {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+        color: #64748b;
+        text-align: left;
+        padding: 0 10px
+    }
+
+    tbody tr {
+        background: #fff;
+        border: 1px solid #e2e8f0
+    }
+
+    tbody td {
+        padding: 12px 10px;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0
+    }
+
+    tbody tr td:first-child {
+        border-left: 1px solid #e2e8f0;
+        border-top-left-radius: 14px;
+        border-bottom-left-radius: 14px
+    }
+
+    tbody tr td:last-child {
+        border-right: 1px solid #e2e8f0;
+        border-top-right-radius: 14px;
+        border-bottom-right-radius: 14px
+    }
+
+    .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace
+    }
+
+    .tt {
+        font-weight: 800
+    }
+
+    .acts {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-start
+    }
+
+    .empty {
+        margin: 0;
+        color: #475569;
+        font-weight: 700
+    }
+
+    @@media (max-width: 900px) {
+        .topbar {
+            flex-direction: column;
+            align-items: stretch
+        }
+
+        .filters {
+            grid-template-columns: 1fr
+        }
+
+        .acts {
+            gap: 8px
+        }
+
+        thead {
+            display: none
+        }
+
+        .tbl {
+            border-spacing: 0
+        }
+
+        tbody tr td {
+            display: block;
+            border-left: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0
+        }
+
+            tbody tr td:first-child {
+                border-top-left-radius: 14px;
+                border-top-right-radius: 14px;
+                border-bottom-left-radius: 0
+            }
+
+            tbody tr td:last-child {
+                border-bottom-left-radius: 14px;
+                border-bottom-right-radius: 14px;
+                border-top-right-radius: 0
+            }
+    }
+</style>
+
+@code {
+    /* Data */
+    private List<JournalEntry> AllEntries = new();
+    private List<JournalEntry> FilteredEntries = new();
+
+    private string ExportMessage = "";
+
+    /* Filter state */
+    private string SearchText = "";
+    private string SelectedMood = "";
+    private string SelectedTag = "";
+    private string SelectedDateRange = "All";
+
+    private readonly List<string> AllMoods = new()
+    {
+        "Happy","Excited","Relaxed","Grateful",
+        "Calm","Thoughtful","Bored",
+        "Sad","Stressed","Anxious"
+    };
+
+    private List<string> AllTags = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadEntries();
+        ApplyFilters();
+    }
+
+    private async Task ReloadEntries()
+    {
+        AllEntries = await Database.GetEntriesAsync();
+
+        // Build tag dropdown values from all entries.
+        AllTags = AllEntries
+            .Where(e => !string.IsNullOrWhiteSpace(e.Tags))
+            .SelectMany(e => e.Tags!.Split(',', StringSplitOptions.RemoveEmptyEntries))
+            .Select(t => t.Trim())
+            .Where(t => t.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(t => t)
+            .ToList();
+    }
+
+    /* Apply search and filters */
+    private void ApplyFilters()
+    {
+        ExportMessage = "";
+
+        IEnumerable<JournalEntry> q = AllEntries;
+
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            q = q.Where(e =>
+                (e.Title?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (e.Content?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+
+        if (SelectedDateRange != "All")
+        {
+            int days = int.Parse(SelectedDateRange);
+            var from = DateTime.Today.AddDays(-days);
+            q = q.Where(e => e.EntryDate >= from);
+        }
+
+        if (!string.IsNullOrWhiteSpace(SelectedMood))
+            q = q.Where(e => e.PrimaryMood == SelectedMood);
+
+        if (!string.IsNullOrWhiteSpace(SelectedTag))
+        {
+            q = q.Where(e => e.Tags != null &&
+                e.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                      .Any(t => t.Trim().Equals(SelectedTag, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        FilteredEntries = q.OrderByDescending(e => e.EntryDate).ToList();
+    }
+
+    /* Actions */
+    private void ViewEntry(DateTime date)
+    {
+        // Change this route if your view page uses a different URL.
+        Nav.NavigateTo($"/journal/view/{date:yyyy-MM-dd}");
+    }
+
+    private void EditEntry(DateTime date)
+    {
+        Nav.NavigateTo($"/journal/edit/{date:yyyy-MM-dd}");
+    }
+
+    private async Task DeleteEntry(DateTime date)
+    {
+        await Database.DeleteEntryAsync(date);
+        await ReloadEntries();
+        ApplyFilters();
+    }
+
+    private void ExportSingle(JournalEntry entry)
+    {
+        var path = PdfService.ExportJournalsToPdf(
+            new List<JournalEntry> { entry },
+            entry.EntryDate,
+            entry.EntryDate
+        );
+
+        ExportMessage = $"Journal exported successfully: {path}";
+    }
+}

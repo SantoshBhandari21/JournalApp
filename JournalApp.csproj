@@ -73,8 +73,6 @@
 	<ItemGroup>
 		<Folder Include="ViewsModels\" />
 		<Folder Include="Views\" />
-		<Folder Include="ViewsModels\" />
-		<Folder Include="Views\" />
 	</ItemGroup>
 
 </Project>

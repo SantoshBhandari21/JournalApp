@@ -10,7 +10,6 @@ namespace JournalApp.wwwroot.css {
 {
 }
 
-}
 
 .bar-row {
     display: grid;
@@ -34,4 +33,15 @@ namespace JournalApp.wwwroot.css {
 
 .highlight {
     border: 2px solid #ff9800;
+}
+
+.pin-card {
+    max-width: 300px;
+    margin: auto;
+    text-align: center;
+}
+
+.error-msg {
+    color: red;
+    margin-top: 10px;
 }

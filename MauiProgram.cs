@@ -1,5 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
-using JournalApp.Services;
+﻿using JournalApp.Services;
+using Microsoft.Extensions.Logging;
+
 namespace JournalApp
 {
     public static class MauiProgram
@@ -7,6 +8,7 @@ namespace JournalApp
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
+
             builder
                 .UseMauiApp<App>()
                 .ConfigureFonts(fonts =>
@@ -16,14 +18,17 @@ namespace JournalApp
 
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddSingleton<DatabaseService>();
-            builder.Services.AddSingleton<ThemeService>();
+            builder.Services.AddSingleton<PdfExportService>();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
             builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
+            var app = builder.Build();
+
+
+            return app;
         }
     }
 }

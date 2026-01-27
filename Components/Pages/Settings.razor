@@ -1,85 +1,193 @@
 ﻿@page "/settings"
 
-@inject JournalApp.Services.ThemeService Theme
-@inject JournalApp.Data.JournalService JournalService
+@inject JournalApp.Services.DatabaseService Database
+@inject JournalApp.Services.PdfExportService PdfService
 @inject IJSRuntime JS
 
-<h2>Settings</h2>
+<!-- Settings
+     - Export journals as PDF
+     - Clear all data (danger zone) -->
 
-<!-- ================= THEME ================= -->
-<div class="card">
-    <h3>Theme</h3>
-
-    <label>
-        <input type="checkbox"
-               checked="@(Theme.CurrentTheme == "dark")"
-               @onchange="ToggleTheme" />
-        Dark Mode
-    </label>
-</div>
-
-<!-- ================= DATA MANAGEMENT ================= -->
-<div class="card danger-zone">
-    <h3>Data Management</h3>
-
-    <button class="btn danger" @onclick="ShowConfirm">
-        Clear All Journal Data
-    </button>
-
-    <p class="warning-text">
-        Warning: This action will permanently delete all journal entries.
-    </p>
-</div>
-
-<!-- ================= CONFIRM POPUP ================= -->
-@if (ShowConfirmPopup)
-{
-    <div class="modal-overlay">
-        <div class="modal-box">
-            <h3>⚠ Confirm Action</h3>
-            <p>Are you sure you want to delete all journal entries?</p>
-
-            <div class="actions">
-                <button class="btn danger" @onclick="ClearAllData">
-                    Yes, Delete
-                </button>
-
-                <button class="btn secondary" @onclick="HideConfirm">
-                    Cancel
-                </button>
-            </div>
-        </div>
+<div class="page">
+    <div class="head">
+        <h2 class="title">Settings</h2>
+        <p class="sub">Exports and data management.</p>
     </div>
+
+    <!-- Export -->
+    <div class="card">
+        <h3 class="sec">Export Journals</h3>
+
+        <div class="row">
+            <label class="lbl">Date Range</label>
+            <select class="input" @bind="SelectedDateRange">
+                <option value="All">All Time</option>
+                <option value="7">Last 7 Days</option>
+                <option value="30">Last 30 Days</option>
+            </select>
+        </div>
+
+        <button class="btn primary" type="button" @onclick="ExportPdf">Export PDF</button>
+    </div>
+
+    <!-- Data management -->
+    <div class="card warn">
+        <h3 class="sec">Data Management</h3>
+
+        <button class="btn danger" type="button" @onclick="ClearAllData">Clear All Data</button>
+        <p class="warn-text">This action permanently deletes all journal entries.</p>
+    </div>
+</div>
+
+<style>
+/* Page layout */
+.page{
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 26px 24px 36px;
+    color: #1e293b;
 }
 
+.head{
+    margin-bottom: 18px;
+}
+
+.title{
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+}
+
+.sub{
+    margin-top: 6px;
+    color: #475569;
+    font-size: 15px;
+}
+
+/* Cards */
+.card{
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+}
+
+.sec{
+    margin: 0 0 12px;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+/* Form rows */
+.row{
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.lbl{
+    font-weight: 600;
+    color: #334155;
+}
+
+/* Inputs */
+.input{
+    padding: 9px 12px;
+    border: 1px solid #cbd5f5;
+    border-radius: 8px;
+    font-size: 14px;
+    min-width: 200px;
+}
+
+.input:focus{
+    outline: none;
+    border-color: #2563eb;
+}
+
+/* Buttons */
+.btn{
+    padding: 9px 14px;
+    border-radius: 8px;
+    border: 1px solid #cbd5f5;
+    background: #f8fafc;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background .15s ease;
+}
+
+.btn:hover{
+    background: #eef2ff;
+}
+
+.btn.primary{
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+.btn.primary:hover{
+    background: #1d4ed8;
+}
+
+.btn.danger{
+    background: #dc2626;
+    color: #ffffff;
+    border-color: #dc2626;
+}
+
+.btn.danger:hover{
+    background: #b91c1c;
+}
+
+/* Warning section */
+.warn{
+    border-color: #fecaca;
+    background: #fff7f7;
+}
+
+.warn-text{
+    margin-top: 10px;
+    color: #b91c1c;
+    font-size: 13.5px;
+    font-weight: 600;
+}
+</style>
+
 @code {
-    private bool ShowConfirmPopup = false;
+    private string SelectedDateRange = "All";
 
-    private void ToggleTheme(ChangeEventArgs _)
+    private async Task ExportPdf()
     {
-        Theme.Toggle();
-    }
+        var entries = await Database.GetEntriesAsync();
 
-    private void ShowConfirm()
-    {
-        ShowConfirmPopup = true;
-    }
+        if (SelectedDateRange != "All")
+        {
+            int days = int.Parse(SelectedDateRange);
+            var from = DateTime.Today.AddDays(-days);
+            entries = entries.Where(e => e.EntryDate >= from).ToList();
+        }
 
-    private void HideConfirm()
-    {
-        ShowConfirmPopup = false;
+        if (entries.Count == 0)
+        {
+            await JS.InvokeVoidAsync("alert", "No journal entries found.");
+            return;
+        }
+
+        var path = PdfService.ExportJournalsToPdf(
+            entries,
+            entries.Min(e => e.EntryDate),
+            entries.Max(e => e.EntryDate)
+        );
+
+        await JS.InvokeVoidAsync("alert", $"PDF exported:\n{path}");
     }
 
     private async Task ClearAllData()
     {
-        var all = await JournalService.GetAllAsync();
-
-        foreach (var entry in all)
-        {
-            await JournalService.DeleteByDateAsync(entry.EntryDate);
-        }
-
-        ShowConfirmPopup = false;
-        await JS.InvokeVoidAsync("alert", "All journal data has been deleted.");
+        await Database.DeleteAllEntriesAsync();
+        await JS.InvokeVoidAsync("alert", "All data cleared.");
     }
 }
