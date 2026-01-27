@@ -1,0 +1,37 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace JournalApp.wwwroot.css {
+    class site
+
+{
+}
+
+}
+
+.bar-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 60px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.bar {
+    background: #e0e0e0;
+    height: 12px;
+    border-radius: 6px;
+}
+
+.bar-fill {
+    background: #4a90e2;
+    height: 100%;
+    border-radius: 6px;
+}
+
+.highlight {
+    border: 2px solid #ff9800;
+}
