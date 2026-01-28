@@ -5,36 +5,24 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<!-- =========================================================
-     Journal Entry Page
-     - Purpose: Create a daily journal entry with mood and tags.
-     - UI: Light theme for readability and professional look.
-     - Feature: Supports Primary mood + 2 secondary moods.
-     - Storage: Secondary moods are saved inside Tags to avoid DB changes.
-   ========================================================= -->
-
 <div class="page">
-
     <div class="page-head">
         <h2 class="page-title">Daily Journal</h2>
         <p class="page-subtitle">Write your entry, select moods and add tags.</p>
     </div>
 
-    <!-- Center popup modal -->
     @if (ShowPopup)
     {
         <div class="modal-overlay" role="dialog" aria-modal="true">
             <div class="modal-box">
-                <h3>Message</h3>
-                <p>@PopupMessage</p>
-                <button class="btn primary" @onclick="ClosePopup" type="button">OK</button>
+                <h3 class="modal-title">Message</h3>
+                <p class="modal-text">@PopupMessage</p>
+                <button class="btn primary" type="button" @onclick="ClosePopup">OK</button>
             </div>
         </div>
     }
 
     <div class="grid">
-
-        <!-- Journal content -->
         <div class="card">
             <h3 class="card-title">Entry Details</h3>
 
@@ -62,14 +50,10 @@
             </div>
         </div>
 
-        <!-- Mood + Tags -->
         <div class="side">
-
-            <!-- Moods -->
             <div class="card">
                 <h3 class="card-title">Mood Tracking</h3>
 
-                if - Adaptive
                 <div class="field">
                     <label class="label">Primary Mood <span class="req">*</span></label>
                     <select class="input" @bind="PrimaryMood">
@@ -102,10 +86,8 @@
                         }
                     </select>
                 </div>
-
             </div>
 
-            <!-- Tags -->
             <div class="card">
                 <h3 class="card-title">Tags <span class="req">*</span></h3>
 
@@ -122,35 +104,19 @@
                 </div>
 
                 <div class="custom-tag">
-                    <input class="input"
-                           placeholder="Add custom tag"
-                           @bind="NewTag" />
-
-                    <button class="btn secondary"
-                            type="button"
-                            @onclick="AddCustomTag">
-                        Add
-                    </button>
+                    <input class="input" placeholder="Add custom tag" @bind="NewTag" />
+                    <button class="btn secondary" type="button" @onclick="AddCustomTag">Add</button>
                 </div>
             </div>
 
-            <!-- Save -->
             <div class="actions">
-                <button class="btn primary" @onclick="SaveEntry" type="button">
-                    Save Journal
-                </button>
+                <button class="btn primary" type="button" @onclick="SaveEntry">Save Journal</button>
             </div>
-
         </div>
     </div>
 </div>
 
 <style>
-    /* =========================================================
-           Journal Page UI (Light Theme)
-           - Clean and readable on white content area.
-           ========================================================= */
-
     .page {
         max-width: 1100px;
         margin: 0 auto;
@@ -182,6 +148,7 @@
         align-items: start;
     }
 
+    /* Cards and form elements */
     .card {
         background: #fff;
         border: 1px solid #e2e8f0;
@@ -229,13 +196,6 @@
             box-shadow: 0 0 0 4px rgba(59,130,246,.14);
         }
 
-    .hint {
-        margin: 6px 0 0;
-        color: #64748b;
-        font-size: 12.5px;
-        font-weight: 600;
-    }
-
     /* Editor */
     .editor-toolbar {
         display: flex;
@@ -252,6 +212,7 @@
         cursor: pointer;
         font-weight: 800;
         box-shadow: 0 10px 26px rgba(15,23,42,.08);
+        transition: transform .08s ease, filter .08s ease;
     }
 
         .tool:hover {
@@ -269,13 +230,13 @@
         border: 1px solid #e2e8f0;
         border-radius: 14px;
         padding: 12px;
-        background: #ffffff;
+        background: #fff;
         box-shadow: 0 6px 18px rgba(15,23,42,.06);
         outline: none;
         line-height: 1.5;
     }
 
-    /* Tags */
+    /* Tags and actions */
     .tags {
         display: flex;
         flex-wrap: wrap;
@@ -306,7 +267,6 @@
         margin-top: 10px;
     }
 
-    /* Buttons */
     .btn {
         border: 1px solid #e2e8f0;
         background: #fff;
@@ -328,10 +288,6 @@
         .btn.primary {
             border-color: rgba(59,130,246,.45);
             background: rgba(59,130,246,.10);
-        }
-
-        .btn.secondary {
-            background: #fff;
         }
 
     .actions {
@@ -373,28 +329,26 @@
         font-weight: 600;
     }
 
+    /* Responsive */
     @@media (max-width: 900px) {
-        .grid
+        .grid {
+            grid-template-columns: 1fr;
+        }
 
-    {
-        grid-template-columns: 1fr;
-    }
+        .actions {
+            justify-content: stretch;
+        }
 
-    .actions {
-        justify-content: stretch;
-    }
-
-    .btn.primary {
-        width: 100%;
-    }
-
+        .btn.primary {
+            width: 100%;
+        }
     }
 </style>
 
 @code {
-
-    private bool ShowPopup = false;
+    private bool ShowPopup;
     private string PopupMessage = "";
+
     private string? Title;
     private string? Content;
 
@@ -411,9 +365,6 @@
         "Family","Personal Growth","Hobbies","Coding"
     };
 
-    private List<string> AllVisibleTags =>
-        PredefinedTags.Union(SelectedTags).OrderBy(t => t).ToList();
-
     private readonly List<string> AllMoods = new()
     {
         "Happy","Excited","Relaxed","Grateful",
@@ -421,7 +372,12 @@
         "Sad","Stressed","Anxious"
     };
 
-    /* Toolbar state */
+    private List<string> AllVisibleTags =>
+        PredefinedTags
+            .Union(SelectedTags, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(t => t)
+            .ToList();
+
     private bool isBold;
     private bool isItalic;
     private bool isHeading;
@@ -432,6 +388,7 @@
     private string HeadingClass => isHeading ? "active" : "";
     private string ListClass => isList ? "active" : "";
 
+    /* Editor toolbar actions and active state sync */
     private async Task ToggleBold()
     {
         await JS.InvokeVoidAsync("editorToggle", "bold");
@@ -459,20 +416,21 @@
     private async Task SyncState()
     {
         var state = await JS.InvokeAsync<EditorState>("getEditorState");
-        isBold = state.bold;
-        isItalic = state.italic;
-        isHeading = state.heading;
-        isList = state.list;
+        isBold = state.Bold;
+        isItalic = state.Italic;
+        isHeading = state.Heading;
+        isList = state.List;
     }
 
-    private class EditorState
+    private sealed class EditorState
     {
-        public bool bold { get; set; }
-        public bool italic { get; set; }
-        public bool heading { get; set; }
-        public bool list { get; set; }
+        public bool Bold { get; set; }
+        public bool Italic { get; set; }
+        public bool Heading { get; set; }
+        public bool List { get; set; }
     }
 
+    /* Tag selection and custom tag creation */
     private void ToggleTag(string tag)
     {
         if (!SelectedTags.Add(tag))
@@ -481,18 +439,18 @@
 
     private void AddCustomTag()
     {
-        if (!string.IsNullOrWhiteSpace(NewTag))
-        {
-            SelectedTags.Add(NewTag.Trim());
-            NewTag = "";
-        }
+        if (string.IsNullOrWhiteSpace(NewTag))
+            return;
+
+        SelectedTags.Add(NewTag.Trim());
+        NewTag = "";
     }
 
+    /* Validate input, prevent multiple entries per day */
     private async Task SaveEntry()
     {
         Content = await JS.InvokeAsync<string>("getEditorContent");
 
-        // Validate required fields.
         if (string.IsNullOrWhiteSpace(Title)
             || string.IsNullOrWhiteSpace(Content)
             || string.IsNullOrWhiteSpace(PrimaryMood)
@@ -504,10 +462,9 @@
             ShowPopup = true;
             return;
         }
-        // ✅ Check if today's entry already exists
+
         var existing = await Database.GetEntriesAsync();
-        bool alreadySavedToday = existing
-            .Any(e => e.EntryDate.Date == DateTime.Today);
+        bool alreadySavedToday = existing.Any(e => e.EntryDate.Date == DateTime.Today);
 
         if (alreadySavedToday)
         {
@@ -516,7 +473,6 @@
             return;
         }
 
-        // Store secondary moods inside tags to avoid changing database schema.
         var finalTags = new HashSet<string>(SelectedTags, StringComparer.OrdinalIgnoreCase)
         {
             $"Mood:{SecondaryMood1.Trim()}",
@@ -536,7 +492,6 @@
 
         Nav.NavigateTo("/journals");
     }
-
     private void ClosePopup()
     {
         ShowPopup = false;

@@ -5,10 +5,6 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<!-- Edit Journal Page
-     - Purpose: Edit an existing journal entry by date.
-     - UI: Light, clean, consistent with other pages. -->
-
 <div class="page">
     <div class="head">
         <h2 class="title">Edit Journal</h2>
@@ -27,7 +23,6 @@
     }
 
     <div class="grid">
-        <!-- Editor -->
         <div class="card">
             <h3 class="ct">Entry Details</h3>
 
@@ -47,14 +42,16 @@
             <p class="hint">Use the toolbar for formatting.</p>
         </div>
 
-        <!-- Side -->
         <div class="card">
             <h3 class="ct">Mood & Tags</h3>
 
             <label class="lbl">Primary Mood <span class="req">*</span></label>
             <select class="input" @bind="PrimaryMood">
                 <option value="">Select mood</option>
-                @foreach (var m in AllMoods) { <option>@m</option> }
+                @foreach (var m in AllMoods)
+                {
+                    <option>@m</option>
+                }
             </select>
 
             <div class="two" style="margin-top:12px;">
@@ -62,7 +59,10 @@
                     <label class="lbl">Secondary Mood 1</label>
                     <select class="input" @bind="SecondaryMood1">
                         <option value="">None</option>
-                        @foreach (var m in AllMoods) { <option>@m</option> }
+                        @foreach (var m in AllMoods)
+                        {
+                            <option>@m</option>
+                        }
                     </select>
                 </div>
 
@@ -70,7 +70,10 @@
                     <label class="lbl">Secondary Mood 2</label>
                     <select class="input" @bind="SecondaryMood2">
                         <option value="">None</option>
-                        @foreach (var m in AllMoods) { <option>@m</option> }
+                        @foreach (var m in AllMoods)
+                        {
+                            <option>@m</option>
+                        }
                     </select>
                 </div>
             </div>
@@ -102,51 +105,54 @@
 </div>
 
 <style>
-   
-    .page{max-width:1100px;margin:0 auto;padding:22px 22px 34px;color:#0f172a}
-    .head{margin-bottom:14px}
-    .title{margin:0;font-size:26px;font-weight:900}
-    .sub{margin:6px 0 0;color:#475569;font-weight:600}
+    /* Page layout and responsive grid */
+    .page { max-width: 1100px; margin: 0 auto; padding: 22px 22px 34px; color: #0f172a; }
+    .head { margin-bottom: 14px; }
+    .title { margin: 0; font-size: 26px; font-weight: 900; }
+    .sub { margin: 6px 0 0; color: #475569; font-weight: 600; }
+    .grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; align-items: start; }
 
-    .grid{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;align-items:start}
+    /* Card and common form elements */
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 16px; box-shadow: 0 14px 34px rgba(15,23,42,.10); }
+    .ct { margin: 0 0 12px; font-weight: 900; font-size: 16px; }
+    .lbl { font-weight: 800; font-size: 13px; display: block; margin-bottom: 6px; }
+    .req { color: #ef4444; font-weight: 900; }
+    .hint { margin: 8px 0 0; color: #64748b; font-size: 12.5px; font-weight: 600; }
 
-    .card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:16px;box-shadow:0 14px 34px rgba(15,23,42,.10)}
-    .ct{margin:0 0 12px;font-weight:900;font-size:16px}
-    .lbl{font-weight:800;font-size:13px;display:block;margin-bottom:6px}
-    .req{color:#ef4444;font-weight:900}
-    .hint{margin:8px 0 0;color:#64748b;font-size:12.5px;font-weight:600}
+    .input { width: 100%; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; outline: none; box-shadow: 0 6px 18px rgba(15,23,42,.06); }
+    .input:focus { border-color: rgba(59,130,246,.6); box-shadow: 0 0 0 4px rgba(59,130,246,.14); }
 
-    .input{width:100%;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;outline:none;box-shadow:0 6px 18px rgba(15,23,42,.06)}
-    .input:focus{border-color:rgba(59,130,246,.6);box-shadow:0 0 0 4px rgba(59,130,246,.14)}
+    /* Editor toolbar and content area */
+    .toolbar { display: flex; gap: 8px; margin: 8px 0 10px; }
+    .tool { border: 1px solid #e2e8f0; background: #fff; border-radius: 10px; padding: 6px 10px; cursor: pointer; font-weight: 900; box-shadow: 0 10px 26px rgba(15,23,42,.08); }
+    .tool.active { border-color: rgba(59,130,246,.55); background: rgba(59,130,246,.08); box-shadow: 0 0 0 3px rgba(59,130,246,.12) inset; }
+    .editor { min-height: 220px; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; box-shadow: 0 6px 18px rgba(15,23,42,.06); outline: none; line-height: 1.5; }
 
-    .toolbar{display:flex;gap:8px;margin:8px 0 10px}
-    .tool{border:1px solid #e2e8f0;background:#fff;border-radius:10px;padding:6px 10px;cursor:pointer;font-weight:900;box-shadow:0 10px 26px rgba(15,23,42,.08)}
-    .tool.active{border-color:rgba(59,130,246,.55);background:rgba(59,130,246,.08);box-shadow:0 0 0 3px rgba(59,130,246,.12) inset}
+    /* Mood selectors, tags, and actions */
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .sep { border: none; border-top: 1px solid #e2e8f0; margin: 14px 0; }
 
-    .editor{min-height:220px;border:1px solid #e2e8f0;border-radius:14px;padding:12px;box-shadow:0 6px 18px rgba(15,23,42,.06);outline:none;line-height:1.5}
+    .tags { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 14px; background: #f8fafc; }
+    .chip { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 999px; background: #fff; cursor: pointer; font-weight: 700; }
+    .chip.on { border-color: rgba(59,130,246,.45); box-shadow: 0 0 0 3px rgba(59,130,246,.12) inset; }
 
-    .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .sep{border:none;border-top:1px solid #e2e8f0;margin:14px 0}
+    .add { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+    .btn { border: 1px solid #e2e8f0; background: #fff; border-radius: 12px; padding: 10px 14px; cursor: pointer; font-weight: 900; box-shadow: 0 10px 26px rgba(15,23,42,.08); }
+    .btn.primary { border-color: rgba(59,130,246,.45); background: rgba(59,130,246,.10); }
+    .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
 
-    .tags{display:flex;flex-wrap:wrap;gap:10px;padding:10px;border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc}
-    .chip{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:999px;background:#fff;cursor:pointer;font-weight:700}
-    .chip.on{border-color:rgba(59,130,246,.45);box-shadow:0 0 0 3px rgba(59,130,246,.12) inset}
+    /* Popup modal */
+    .overlay { position: fixed; inset: 0; background: rgba(15,23,42,.35); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 999; }
+    .modal { width: min(420px, 100%); background: #fff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 16px; box-shadow: 0 20px 60px rgba(15,23,42,.25); }
+    .mt { margin: 0 0 6px; font-weight: 900; }
+    .mp { margin: 0 0 12px; color: #475569; font-weight: 600; }
 
-    .add{display:flex;gap:10px;align-items:center;margin-top:10px}
-    .btn{border:1px solid #e2e8f0;background:#fff;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:900;box-shadow:0 10px 26px rgba(15,23,42,.08)}
-    .btn.primary{border-color:rgba(59,130,246,.45);background:rgba(59,130,246,.10)}
-    .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
-
-    .overlay{position:fixed;inset:0;background:rgba(15,23,42,.35);display:flex;align-items:center;justify-content:center;padding:16px;z-index:999}
-    .modal{width:min(420px,100%);background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:16px;box-shadow:0 20px 60px rgba(15,23,42,.25)}
-    .mt{margin:0 0 6px;font-weight:900}
-    .mp{margin:0 0 12px;color:#475569;font-weight:600}
-
-    @@media (max-width: 900px){
-        .grid{grid-template-columns:1fr}
-        .two{grid-template-columns:1fr}
-        .actions{justify-content:stretch}
-        .btn.primary{flex:1}
+    /* Responsive rules */
+    @@media (max-width: 900px) {
+        .grid { grid-template-columns: 1fr; }
+        .two { grid-template-columns: 1fr; }
+        .actions { justify-content: stretch; }
+        .btn.primary { flex: 1; }
     }
 </style>
 
@@ -168,30 +174,41 @@
 
     private readonly List<string> PredefinedTags = new()
     {
-        "Work","Studies","Health","Fitness","Travel","Family","Personal Growth","Hobbies","Coding"
+        "Work", "Studies", "Health", "Fitness", "Travel", "Family", "Personal Growth", "Hobbies", "Coding"
     };
-
-    private List<string> AllVisibleTags =>
-        PredefinedTags.Union(SelectedTags, StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToList();
 
     private readonly List<string> AllMoods = new()
     {
-        "Happy","Excited","Relaxed","Grateful","Calm","Thoughtful","Bored","Sad","Stressed","Anxious"
+        "Happy", "Excited", "Relaxed", "Grateful", "Calm", "Thoughtful", "Bored", "Sad", "Stressed", "Anxious"
     };
 
-    /* Toolbar state */
-    private bool isBold, isItalic, isHeading, isList;
+    private List<string> AllVisibleTags =>
+        PredefinedTags
+            .Union(SelectedTags, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(t => t)
+            .ToList();
+
+    private bool isBold;
+    private bool isItalic;
+    private bool isHeading;
+    private bool isList;
+
     private string BoldClass => isBold ? "active" : "";
     private string ItalicClass => isItalic ? "active" : "";
     private string HeadingClass => isHeading ? "active" : "";
     private string ListClass => isList ? "active" : "";
 
+    /* Load entry data from database and set the editor content */
     protected override async Task OnInitializedAsync()
     {
         EntryDate = DateTime.Parse(DateString);
-        var entry = await Database.GetEntryByDateAsync(EntryDate);
 
-        if (entry == null) { Nav.NavigateTo("/journals"); return; }
+        var entry = await Database.GetEntryByDateAsync(EntryDate);
+        if (entry == null)
+        {
+            Nav.NavigateTo("/journals");
+            return;
+        }
 
         Title = entry.Title;
         Content = entry.Content;
@@ -210,28 +227,66 @@
         await JS.InvokeVoidAsync("setEditorContent", Content);
     }
 
-    private async Task ToggleBold(){ await JS.InvokeVoidAsync("editorToggle","bold"); await SyncState(); }
-    private async Task ToggleItalic(){ await JS.InvokeVoidAsync("editorToggle","italic"); await SyncState(); }
-    private async Task ToggleHeading(){ await JS.InvokeVoidAsync("editorToggle","heading"); await SyncState(); }
-    private async Task ToggleList(){ await JS.InvokeVoidAsync("editorToggle","list"); await SyncState(); }
-
-    private async Task SyncState()
+    /* Formatting actions for the editor toolbar */
+    private async Task ToggleBold()
     {
-        var s = await JS.InvokeAsync<EditorState>("getEditorState");
-        isBold = s.bold; isItalic = s.italic; isHeading = s.heading; isList = s.list;
+        await JS.InvokeVoidAsync("editorToggle", "bold");
+        await SyncState();
     }
 
-    private class EditorState { public bool bold { get; set; } public bool italic { get; set; } public bool heading { get; set; } public bool list { get; set; } }
+    private async Task ToggleItalic()
+    {
+        await JS.InvokeVoidAsync("editorToggle", "italic");
+        await SyncState();
+    }
 
-    private void ToggleTag(string tag){ if (!SelectedTags.Add(tag)) SelectedTags.Remove(tag); }
+    private async Task ToggleHeading()
+    {
+        await JS.InvokeVoidAsync("editorToggle", "heading");
+        await SyncState();
+    }
+
+    private async Task ToggleList()
+    {
+        await JS.InvokeVoidAsync("editorToggle", "list");
+        await SyncState();
+    }
+
+    /* Keep toolbar active states in sync with the current cursor selection */
+    private async Task SyncState()
+    {
+        var state = await JS.InvokeAsync<EditorState>("getEditorState");
+        isBold = state.Bold;
+        isItalic = state.Italic;
+        isHeading = state.Heading;
+        isList = state.List;
+    }
+
+    private sealed class EditorState
+    {
+        public bool Bold { get; set; }
+        public bool Italic { get; set; }
+        public bool Heading { get; set; }
+        public bool List { get; set; }
+    }
+
+    /* Tag selection and custom tag handling */
+    private void ToggleTag(string tag)
+    {
+        if (!SelectedTags.Add(tag))
+            SelectedTags.Remove(tag);
+    }
 
     private void AddCustomTag()
     {
-        if (string.IsNullOrWhiteSpace(NewTag)) return;
+        if (string.IsNullOrWhiteSpace(NewTag))
+            return;
+
         SelectedTags.Add(NewTag.Trim());
         NewTag = "";
     }
 
+    /* Validate input, update the entry in the database, then navigate back */
     private async Task UpdateEntry()
     {
         Content = await JS.InvokeAsync<string>("getEditorContent");
@@ -260,6 +315,7 @@
         Nav.NavigateTo("/journals");
     }
 
+    /* Simple navigation and popup controls */
     private void ClosePopup() => ShowPopup = false;
     private void Cancel() => Nav.NavigateTo("/journals");
 }

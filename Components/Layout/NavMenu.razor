@@ -1,32 +1,17 @@
 ﻿@inject IJSRuntime JS
 
+<!-- Main sidebar navigation -->
 <nav class="sidebar">
     <h2 class="logo">JournalApp</h2>
 
-    <NavLink href="/" Match="NavLinkMatch.All" class="nav-item">
-        Home
-    </NavLink>
+    <NavLink href="/" Match="NavLinkMatch.All" class="nav-item">Home</NavLink>
+    <NavLink href="/journal" class="nav-item">Add Journal</NavLink>
+    <NavLink href="/journals" class="nav-item">View Journal</NavLink>
+    <NavLink href="/calendar" class="nav-item">Calendar</NavLink>
+    <NavLink href="/settings" class="nav-item">Settings</NavLink>
 
-    <NavLink href="/journal" class="nav-item">
-        Add Journal
-    </NavLink>
-
-    <NavLink href="/journals" class="nav-item">
-        View Journal
-    </NavLink>
-
-    <NavLink href="/calendar" class="nav-item">
-        Calendar
-    </NavLink>
-
-    <NavLink href="/settings" class="nav-item">
-        Settings
-    </NavLink>
-
-    <!-- Theme toggle button -->
     <div class="theme-toggle">
         <span class="theme-text">Theme</span>
-
         <button class="btn-theme" type="button" @onclick="ToggleTheme">
             @(IsDarkTheme ? "Light" : "Dark")
         </button>
@@ -34,81 +19,106 @@
 </nav>
 
 <style>
-    .theme-toggle{
-        margin-top: auto; /* pushes it to bottom */
-        padding: 12px 10px;
-        border-top: 1px solid rgba(255,255,255,0.10);
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:10px;
-        color:#e5e7eb;
-    }
+/* Sidebar layout */
+.sidebar {
+    width: 220px;
+    height: 100vh;
+    background-color: #0a1930;
+    box-sizing: border-box;
+    color: white;
+    display: flex;
+    flex-direction: column;
+}
 
-    .theme-text{
-        font-weight:700;
-        font-size:14px;
-        opacity:.9;
-    }
+/* App title */
+.logo {
+    margin-bottom: 30px;
+    font-size: 22px;
+    font-weight: bold;
+    color: #ffffff;
+}
 
-    .btn-theme{
-        padding: 6px 12px;
-        border-radius: 6px;
-        border: 1px solid rgba(255,255,255,0.25);
-        background: rgba(255,255,255,0.12);
-        color: #ffffff;
-        font-size: 13px;
-        cursor: pointer;
-    }
+/* Nav links */
+.nav-item {
+    display: block;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    color: #e5e7eb;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+}
 
-    .btn-theme:hover{
-        background: rgba(255,255,255,0.20);
-    }
-
-    /* SIDEBAR BACKGROUND */
-    .sidebar {
-        width: 220px;
-        height: 100vh;
-        background-color: #1f2937; /* dark gray / slate */
-        padding: 20px;
-        box-sizing: border-box;
-        color: white;
-
-        /* Required so theme toggle stays at bottom */
-        display: flex;
-        flex-direction: column;
-    }
-
-    /* APP TITLE */
-    .logo {
-        margin-bottom: 30px;
-        font-size: 22px;
-        font-weight: bold;
-        color: #ffffff;
-    }
-
-    /* NAV LINKS */
-    .nav-item {
-        display: block;
-        padding: 12px 14px;
-        margin-bottom: 10px;
-        color: #e5e7eb;
-        text-decoration: none;
-        border-radius: 6px;
-        font-weight: 500;
-    }
-
-    /* HOVER EFFECT */
     .nav-item:hover {
-        background-color: #374151;
+        background-color: #13294b;
+    }
+
+    .nav-item.active {
+        background-color: #1e3a8a; 
         color: #ffffff;
     }
 
-    /* ACTIVE LINK */
-    .nav-item.active {
-        background-color: #4b5563;
-        color: #ffffff;
+/* Theme toggle area */
+.theme-toggle {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: #e5e7eb;
+}
+
+.theme-text {
+    font-weight: 600;
+    font-size: 14px;
+    opacity: 0.95;
+}
+
+/* Switch */
+.switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    display: inline-block;
+}
+
+    .switch input {
+        display: none;
     }
+
+.slider {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.20);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: .15s;
+}
+
+    .slider:before {
+        content: "";
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        left: 3px;
+        top: 2.5px;
+        background: #ffffff;
+        border-radius: 50%;
+        transition: .15s;
+    }
+
+.switch input:checked + .slider {
+    background: #2563eb; 
+    border-color: #2563eb;
+}
+
+    .switch input:checked + .slider:before {
+        transform: translateX(20px);
+    }
+
 </style>
 
 @code {
@@ -119,6 +129,7 @@
         IsDarkTheme = Preferences.Get("dark_theme", false);
     }
 
+    /* Toggles the saved theme and notifies the UI through JavaScript */
     private async Task ToggleTheme()
     {
         IsDarkTheme = !IsDarkTheme;

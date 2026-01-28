@@ -1,6 +1,4 @@
-﻿/* ================================
-   WYSIWYG EDITOR FUNCTIONS
-   ================================ */
+﻿/*EDITOR FUNCTIONS */
 
 /* Toggle formatting */
 window.editorToggle = (type) => {
@@ -45,7 +43,7 @@ window.getEditorContent = () => {
     return editor.innerHTML;
 };
 
-/* ✅ SET content when editing existing journal */
+/* SET content when editing existing journal */
 window.setEditorContent = (html) => {
     const editor = document.getElementById("editor");
     if (!editor) return;

@@ -7,6 +7,7 @@ namespace JournalApp.Services
 {
     public class PdfExportService
     {
+        /* Generate a PDF file from journal entries and return the saved file path */
         public string ExportJournalsToPdf(
             List<JournalEntry> entries,
             DateTime from,
@@ -14,11 +15,12 @@ namespace JournalApp.Services
         {
             QuestPDF.Settings.License = LicenseType.Community;
 
-            var filePath =
-                Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                    $"Journal_{from:yyyyMMdd}_{to:yyyyMMdd}.pdf");
+            var filePath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                $"Journal_{from:yyyyMMdd}_{to:yyyyMMdd}.pdf"
+            );
 
+            /* Build the PDF layout including header and journal content */
             Document.Create(container =>
             {
                 container.Page(page =>
@@ -31,18 +33,21 @@ namespace JournalApp.Services
                         .FontSize(18)
                         .Bold();
 
-                    page.Content().Column(col =>
+                    page.Content().Column(column =>
                     {
                         foreach (var entry in entries)
                         {
-                            col.Item().PaddingBottom(10).BorderBottom(1).Column(c =>
-                            {
-                                c.Item().Text(entry.EntryDate.ToString("yyyy-MM-dd")).Bold();
-                                c.Item().Text(entry.Title ?? "(No Title)").Italic();
-                                c.Item().Text(entry.Content ?? "");
-                                c.Item().Text($"Mood: {entry.PrimaryMood}");
-                                c.Item().Text($"Tags: {entry.Tags}");
-                            });
+                            column.Item()
+                                  .PaddingBottom(10)
+                                  .BorderBottom(1)
+                                  .Column(content =>
+                                  {
+                                      content.Item().Text(entry.EntryDate.ToString("yyyy-MM-dd")).Bold();
+                                      content.Item().Text(entry.Title ?? "(No Title)").Italic();
+                                      content.Item().Text(entry.Content ?? "");
+                                      content.Item().Text($"Mood: {entry.PrimaryMood}");
+                                      content.Item().Text($"Tags: {entry.Tags}");
+                                  });
                         }
                     });
                 });

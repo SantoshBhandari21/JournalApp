@@ -9,19 +9,8 @@
     </main>
 </div>
 
-@code {
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // Apply saved theme ONCE at app startup
-            var isDark = Preferences.Get("dark_theme", false);
-            await JS.InvokeVoidAsync("toggleTheme", isDark);
-        }
-    }
-}
-
 <style>
+    /* Main layout structure and content area styling */
     .layout {
         display: flex;
         height: 100vh;
@@ -35,13 +24,25 @@
         transition: background-color 0.3s ease;
     }
 
-    /* Light theme (default) */
+    /* Light and dark theme background handling */
     body:not(.dark-theme) .content {
         background-color: #f9f9f9;
     }
 
-    /* Dark theme */
     body.dark-theme .content {
         background-color: #0f172a;
     }
+
 </style>
+
+@code {
+    /* Applying saved theme once when the app first loads */
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        var isDark = Preferences.Get("dark_theme", false);
+        await JS.InvokeVoidAsync("toggleTheme", isDark);
+    }
+}

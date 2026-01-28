@@ -1,17 +1,14 @@
 ﻿@page "/journals"
-
 @using JournalApp.Models
 @inject JournalApp.Services.DatabaseService Database
 @inject JournalApp.Services.PdfExportService PdfService
 @inject NavigationManager Nav
 
-<!-- Journal List Page
-     - Purpose: Search, filter, view, edit, delete, export entries.-->
-
+<!-- Page header and filter controls -->
 <div class="page">
     <div class="head">
         <h2 class="title">Journal List</h2>
-        <p class="sub">Find entries by keyword, date range, mood or tags.</p>
+        <p class="sub">Search and filter your entries by keyword, date range, mood, or tags.</p>
     </div>
 
     <div class="card">
@@ -50,6 +47,7 @@
         }
     </div>
 
+    <!-- Results table -->
     @if (FilteredEntries.Count == 0)
     {
         <div class="card" style="margin-top:14px;">
@@ -90,7 +88,7 @@
 </div>
 
 <style>
-
+    /* Page layout */
     .page {
         max-width: 1100px;
         margin: 0 auto;
@@ -105,7 +103,7 @@
     .title {
         margin: 0;
         font-size: 26px;
-        font-weight: 900
+        font-weight: 800
     }
 
     .sub {
@@ -114,6 +112,7 @@
         font-weight: 600
     }
 
+    /* Cards and controls */
     .card {
         background: #fff;
         border: 1px solid #e2e8f0;
@@ -155,7 +154,7 @@
         border-radius: 12px;
         padding: 10px 14px;
         cursor: pointer;
-        font-weight: 900;
+        font-weight: 800;
         box-shadow: 0 10px 26px rgba(15,23,42,.08);
         white-space: nowrap
     }
@@ -174,6 +173,7 @@
             transform: translateY(-1px)
         }
 
+    /* Messages */
     .msg {
         margin-top: 10px;
         padding: 10px 12px;
@@ -184,6 +184,13 @@
         font-weight: 700
     }
 
+    .empty {
+        margin: 0;
+        color: #475569;
+        font-weight: 700
+    }
+
+    /* Table */
     .tbl {
         width: 100%;
         border-collapse: separate;
@@ -223,7 +230,7 @@
     }
 
     .mono {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace
+        font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace
     }
 
     .tt {
@@ -237,13 +244,8 @@
         justify-content: flex-start
     }
 
-    .empty {
-        margin: 0;
-        color: #475569;
-        font-weight: 700
-    }
-
-    @@media (max-width: 900px) {
+    /* Mobile adjustments */
+    @@media (max-width:900px) {
         .topbar {
             flex-direction: column;
             align-items: stretch
@@ -286,13 +288,11 @@
 </style>
 
 @code {
-    /* Data */
     private List<JournalEntry> AllEntries = new();
     private List<JournalEntry> FilteredEntries = new();
 
     private string ExportMessage = "";
 
-    /* Filter state */
     private string SearchText = "";
     private string SelectedMood = "";
     private string SelectedTag = "";
@@ -313,11 +313,11 @@
         ApplyFilters();
     }
 
+    /* Loads all entries and prepares tag dropdown values */
     private async Task ReloadEntries()
     {
         AllEntries = await Database.GetEntriesAsync();
 
-        // Build tag dropdown values from all entries.
         AllTags = AllEntries
             .Where(e => !string.IsNullOrWhiteSpace(e.Tags))
             .SelectMany(e => e.Tags!.Split(',', StringSplitOptions.RemoveEmptyEntries))
@@ -328,7 +328,7 @@
             .ToList();
     }
 
-    /* Apply search and filters */
+    /* Applies search and filter options to the full list */
     private void ApplyFilters()
     {
         ExportMessage = "";
@@ -362,13 +362,7 @@
         FilteredEntries = q.OrderByDescending(e => e.EntryDate).ToList();
     }
 
-    /* Actions */
-    private void ViewEntry(DateTime date)
-    {
-        // Change this route if your view page uses a different URL.
-        Nav.NavigateTo($"/journal/view/{date:yyyy-MM-dd}");
-    }
-
+    /* Entry actions for edit, delete, and PDF export */
     private void EditEntry(DateTime date)
     {
         Nav.NavigateTo($"/journal/edit/{date:yyyy-MM-dd}");

@@ -4,22 +4,17 @@
 @using JournalApp.Models
 @inject JournalApp.Services.DatabaseService Database
 
-<!-- =========================================================
-     Home / Dashboard
-     - Purpose: Show summary analytics for journal entries.
-     - UI: Uses global "ui-*" classes for consistent styling.
-     - Notes: No emojis in UI/code.
-   ========================================================= -->
+<!-- Dashboard header and date range filter -->
+<div class="page">
+    <div class="head">
+        <div>
+            <h2 class="title">Dashboard Analytics</h2>
+            <p class="sub">Summary insights based on your journal entries.</p>
+        </div>
 
-<div class="ui-page">
-
-    <div class="ui-head">
-        <h2 class="ui-title">Dashboard Analytics</h2>
-
-        <!-- Date range filter -->
-        <div class="ui-row">
-            <label class="ui-muted" for="range">Date Range</label>
-            <select id="range" class="ui-input" @bind="SelectedRange" @bind:after="LoadAnalytics">
+        <div class="filter">
+            <label class="muted" for="range">Date Range</label>
+            <select id="range" class="input" @bind="SelectedRange" @bind:after="LoadAnalytics">
                 <option value="All">All Time</option>
                 <option value="7">Last 7 Days</option>
                 <option value="30">Last 30 Days</option>
@@ -27,41 +22,41 @@
         </div>
     </div>
 
-    <!-- Summary cards -->
-    <div class="dash-grid">
-        <div class="dash-stat">
+    <!-- Summary stats -->
+    <div class="stats">
+        <div class="stat">
             <div class="k">Total Entries</div>
             <div class="v">@TotalEntries</div>
         </div>
 
-        <div class="dash-stat accent">
+        <div class="stat accent">
             <div class="k">Current Streak</div>
             <div class="v">@CurrentStreak</div>
         </div>
 
-        <div class="dash-stat">
+        <div class="stat">
             <div class="k">Longest Streak</div>
             <div class="v">@LongestStreak</div>
         </div>
 
-        <div class="dash-stat">
+        <div class="stat">
             <div class="k">Missed Days</div>
             <div class="v">@MissedDays</div>
         </div>
 
-        <div class="dash-stat">
+        <div class="stat">
             <div class="k">Most Frequent Mood</div>
             <div class="v">@MostCommonMood</div>
         </div>
     </div>
 
-    <!-- Mood distribution -->
-    <div class="ui-card" style="margin-top:14px;">
-        <h3 class="sec-title">Mood Distribution</h3>
+    <!-- Mood distribution and tag usage -->
+    <div class="card">
+        <h3 class="sec">Mood Distribution</h3>
 
         @if (!MoodDistribution.Any())
         {
-            <p class="ui-muted">No data available for the selected range.</p>
+            <p class="muted">No data available for the selected range.</p>
         }
         else
         {
@@ -69,22 +64,19 @@
             {
                 <div class="bar-row">
                     <span class="lbl">@mood.Key</span>
-                    <div class="bar">
-                        <div class="fill" style="width:@mood.Value%"></div>
-                    </div>
+                    <div class="bar"><div class="fill" style="width:@mood.Value%"></div></div>
                     <span class="pct">@mood.Value%</span>
                 </div>
             }
         }
     </div>
 
-    <!-- Most used tags -->
-    <div class="ui-card" style="margin-top:14px;">
-        <h3 class="sec-title">Most Used Tags</h3>
+    <div class="card" style="margin-top:14px;">
+        <h3 class="sec">Most Used Tags</h3>
 
         @if (!MostUsedTags.Any())
         {
-            <p class="ui-muted">No tag usage found for the selected range.</p>
+            <p class="muted">No tag usage found for the selected range.</p>
         }
         else
         {
@@ -92,9 +84,7 @@
             {
                 <div class="bar-row">
                     <span class="lbl">@tag.Key</span>
-                    <div class="bar">
-                        <div class="fill" style="width:@tag.Value%"></div>
-                    </div>
+                    <div class="bar"><div class="fill" style="width:@tag.Value%"></div></div>
                     <span class="pct">@tag.Value%</span>
                 </div>
             }
@@ -102,158 +92,72 @@
     </div>
 
     <!-- Word count -->
-    <div class="ui-card" style="margin-top:14px;">
-        <h3 class="sec-title">Word Count Trend</h3>
-        <p class="ui-muted" style="margin:0;">
-            Average words per entry: <b>@AverageWordCount</b>
-        </p>
+    <div class="card" style="margin-top:14px;">
+        <h3 class="sec">Word Count Trend</h3>
+        <p class="muted" style="margin:0;">Average words per entry: <b>@AverageWordCount</b></p>
     </div>
-
 </div>
 
-<!-- =========================================================
-     Page-specific CSS (small)
-     - Purpose: Keep dashboard layout consistent and clean.
-     - If you already created app-ui.css, you can merge these.
-   ========================================================= -->
 <style>
-    /* =========================================================
-       Home Dashboard - Light Theme Overrides
-       - Purpose: Ensure text is readable on a light content area.
-       - Keeps UI clean, consistent, and human-friendly.
-       ========================================================= */
+/* Page layout */
+.page{max-width:1050px;margin:0 auto;padding:22px 22px 34px;color:#0f172a}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin:6px 0 16px}
+.title{margin:0;font-size:26px;font-weight:800;letter-spacing:.2px}
+.sub{margin:6px 0 0;color:#475569;font-weight:600}
+.muted{color:#475569}
 
-    .ui-page{
-        max-width: 1050px;
-        margin: 0 auto;
-        padding: 22px 22px 34px;
-        color: #0f172a; /* Dark readable text */
-    }
+/* Filter */
+.filter{display:flex;flex-direction:column;gap:6px}
+.input{
+    border:1px solid #e2e8f0;background:#fff;color:#0f172a;border-radius:12px;
+    padding:9px 12px;outline:none;min-width:170px;
+    box-shadow:0 6px 18px rgba(15,23,42,.06)
+}
 
-    .ui-head{
-        display:flex;
-        align-items:flex-end;
-        justify-content:space-between;
-        gap:14px;
-        margin: 6px 0 16px;
-    }
+/* Cards and summary stats */
+.card{
+    background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:16px;
+    box-shadow:0 14px 34px rgba(15,23,42,.10)
+}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.stat{
+    background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:14px 16px;
+    box-shadow:0 10px 26px rgba(15,23,42,.08)
+}
+.stat.accent{
+    border-color:rgba(59,130,246,.45);
+    box-shadow:0 0 0 3px rgba(59,130,246,.12) inset, 0 10px 26px rgba(15,23,42,.08)
+}
+.k{font-size:12px;font-weight:800;color:#64748b;margin-bottom:6px;letter-spacing:.3px;text-transform:uppercase}
+.v{font-size:26px;font-weight:900;color:#0f172a}
+.sec{margin:0 0 12px;font-weight:900;letter-spacing:.2px}
 
-    .ui-title{
-        margin:0;
-        font-size: 26px;
-        font-weight: 800;
-        letter-spacing: .2px;
-        color:#0f172a;
-    }
+/* Bars */
+.bar-row{display:grid;grid-template-columns:160px 1fr 60px;gap:12px;align-items:center;padding:6px 0}
+.lbl{color:#0f172a;font-weight:700}
+.pct{color:#64748b;text-align:right;font-weight:800}
+.bar{height:12px;border-radius:999px;background:#f1f5f9;border:1px solid #e2e8f0;overflow:hidden}
+.fill{height:100%;background:#3b82f6;border-radius:999px}
 
-    .ui-muted{ color:#475569; }
-
-    /* Input */
-    .ui-input{
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        color: #0f172a;
-        border-radius: 12px;
-        padding: 9px 12px;
-        outline: none;
-        min-width: 170px;
-        box-shadow: 0 6px 18px rgba(15,23,42,.06);
-    }
-
-    /* Cards */
-    .ui-card{
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 18px;
-        padding: 16px;
-        box-shadow: 0 14px 34px rgba(15,23,42,.10);
-    }
-
-    /* Summary grid */
-    .dash-grid{
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 14px;
-    }
-
-    .dash-stat{
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 18px;
-        padding: 14px 16px;
-        box-shadow: 0 10px 26px rgba(15,23,42,.08);
-    }
-
-    .dash-stat.accent{
-        border-color: rgba(59,130,246,.45);
-        box-shadow: 0 0 0 3px rgba(59,130,246,.12) inset,
-                    0 10px 26px rgba(15,23,42,.08);
-    }
-
-    .k{
-        font-size: 12px;
-        font-weight: 800;
-        color:#64748b;
-        margin-bottom: 6px;
-        letter-spacing: .3px;
-        text-transform: uppercase;
-    }
-
-    .v{
-        font-size: 26px;
-        font-weight: 900;
-        color:#0f172a;
-    }
-
-    /* Section titles */
-    .sec-title{
-        margin: 0 0 12px;
-        font-weight: 900;
-        color:#0f172a;
-        letter-spacing: .2px;
-    }
-
-    /* Bars */
-    .bar-row{
-        display: grid;
-        grid-template-columns: 160px 1fr 60px;
-        gap: 12px;
-        align-items: center;
-        padding: 6px 0;
-    }
-
-    .lbl{ color:#0f172a; font-weight: 700; }
-    .pct{ color:#64748b; text-align:right; font-weight: 800; }
-
-    .bar{
-        height: 12px;
-        border-radius: 999px;
-        background: #f1f5f9;
-        border: 1px solid #e2e8f0;
-        overflow: hidden;
-    }
-
-    .fill{
-        height: 100%;
-        background: #3b82f6;
-        border-radius: 999px;
-    }
+@@media (max-width: 800px){
+    .head{flex-direction:column;align-items:stretch}
+    .filter{align-items:stretch}
+    .input{min-width:100%}
+    .bar-row{grid-template-columns:120px 1fr 50px}
+}
 </style>
 
-
 @code {
-    /* Filter selection */
     private string SelectedRange = "All";
 
-    /* Summary values */
     private int TotalEntries;
     private int CurrentStreak;
     private int LongestStreak;
     private int MissedDays;
-    private string MostCommonMood = "-";
     private int AverageWordCount;
+    private string MostCommonMood = "-";
+    
 
-    /* Analytics collections */
     private Dictionary<string, int> MoodDistribution = new();
     private Dictionary<string, int> MostUsedTags = new();
 
@@ -262,14 +166,13 @@
         await LoadAnalytics();
     }
 
+    /* Loading entries, appliying filters and prepare values for the dashboard */
     private async Task LoadAnalytics()
     {
-        // Reset state so UI does not show stale values when the selected range has no entries.
         ResetAnalytics();
 
         var entries = await Database.GetEntriesAsync();
 
-        // Apply date range filtering when needed.
         if (SelectedRange != "All")
         {
             int days = int.Parse(SelectedRange);
@@ -277,13 +180,11 @@
             entries = entries.Where(e => e.EntryDate >= fromDate).ToList();
         }
 
-        // No entries: keep defaults and stop.
         if (!entries.Any())
             return;
 
         TotalEntries = entries.Count;
 
-        // Most frequent mood (ignore empty moods).
         var moods = entries.Where(e => !string.IsNullOrWhiteSpace(e.PrimaryMood)).ToList();
         if (moods.Any())
         {
@@ -293,7 +194,6 @@
                 .First().Key;
         }
 
-        // Mood distribution (percentage).
         MoodDistribution = entries
             .GroupBy(e => GetMoodCategory(e.PrimaryMood))
             .ToDictionary(
@@ -301,7 +201,6 @@
                 g => (int)(g.Count() * 100.0 / entries.Count)
             );
 
-        // Tag usage (top 5).
         var tags = entries
             .Where(e => !string.IsNullOrWhiteSpace(e.Tags))
             .SelectMany(e => e.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
@@ -321,17 +220,16 @@
                 );
         }
 
-        // Average word count per entry.
         AverageWordCount = (int)entries.Average(e =>
             string.IsNullOrWhiteSpace(e.Content)
                 ? 0
                 : e.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length
         );
 
-        // Streak calculation based on distinct entry dates.
         CalculateStreaks(entries.Select(e => e.EntryDate.Date).Distinct().OrderBy(d => d).ToList());
     }
 
+    /* Resets all analytics */
     private void ResetAnalytics()
     {
         TotalEntries = 0;
@@ -344,6 +242,7 @@
         MostUsedTags = new();
     }
 
+    /* Calculates current streak, longest streak and missed days */
     private void CalculateStreaks(List<DateTime> dates)
     {
         if (dates.Count == 0)
@@ -351,7 +250,6 @@
 
         DateTime today = DateTime.Today;
 
-        // Current streak: count backward from today while dates contain the day.
         int current = 0;
         DateTime cursor = today;
         while (dates.Contains(cursor))
@@ -361,21 +259,14 @@
         }
         CurrentStreak = current;
 
-        // Longest streak: scan sorted dates and count consecutive runs.
         int longest = 1, temp = 1;
         for (int i = 1; i < dates.Count; i++)
         {
-            if (dates[i] == dates[i - 1].AddDays(1))
-                temp++;
-            else
-            {
-                longest = Math.Max(longest, temp);
-                temp = 1;
-            }
+            if (dates[i] == dates[i - 1].AddDays(1)) temp++;
+            else { longest = Math.Max(longest, temp); temp = 1; }
         }
         LongestStreak = Math.Max(longest, temp);
 
-        // Missed days: count days missing from first entry date to today.
         MissedDays = Enumerable
             .Range(0, (today - dates.First()).Days + 1)
             .Count(i => !dates.Contains(dates.First().AddDays(i)));

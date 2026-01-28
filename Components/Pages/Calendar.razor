@@ -4,135 +4,122 @@
 @inject JournalApp.Services.DatabaseService Database
 @inject NavigationManager Nav
 
-<h2 class="cal-title">📅 Calendar</h2>
+<!-- Calendar header and month navigation -->
+<div class="page">
+    <h2 class="title">Calendar</h2>
 
-<div class="calendar-header">
-    <button class="btn secondary" @onclick="PreviousMonth">‹</button>
+    <div class="cal-header">
+        <button class="btn secondary" type="button" @onclick="PreviousMonth">Previous</button>
+        <h3 class="month">@CurrentMonth.ToString("MMMM yyyy")</h3>
+        <button class="btn secondary" type="button" @onclick="NextMonth">Next</button>
+    </div>
 
-    <h3 class="cal-month">@CurrentMonth.ToString("MMMM yyyy")</h3>
+    <!-- Calendar grid with day names and day  -->
+    <div class="cal-grid">
+        @foreach (var name in DayNames)
+        {
+            <div class="cell head">@name</div>
+        }
 
-    <button class="btn secondary" @onclick="NextMonth">›</button>
-</div>
+        @foreach (var day in CalendarDays)
+        {
+            <div class="cell @(day.HasEntry ? "has" : "")"
+                 @onclick="() => OpenDay(day.Date)">
 
-<div class="calendar-grid">
-    @foreach (var dayName in DayNames)
-    {
-        <div class="calendar-day header">@dayName</div>
-    }
-
-    @foreach (var day in CalendarDays)
-    {
-        <div class="calendar-day @(day.HasEntry ? "has-entry" : "")"
-             @onclick="() => OpenDay(day.Date)">
-
-            @if (day.Date != null)
-            {
-                <span class="day-number">@day.Date.Value.Day</span>
-
-                @if (day.HasEntry)
+                @if (day.Date is not null)
                 {
-                    <span class="entry-dot"></span>
+                    <span class="num">@day.Date.Value.Day</span>
+
+                    @if (day.HasEntry)
+                    {
+                        <span class="dot"></span>
+                    }
                 }
-            }
-        </div>
-    }
+            </div>
+        }
+    </div>
 </div>
 
 <style>
-    /* ===== Make it look like a real calendar (minimal CSS) ===== */
+/* Page layout */
+.page{max-width:900px;margin:0 auto;padding:20px;color:#1e293b}
+.title{margin:0 0 12px;font-size:24px;font-weight:800}
 
-    .cal-title {
-        margin: 6px 0 12px;
-    }
+/* Month controls */
+.cal-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.month{margin:0;flex:1;text-align:center;font-weight:800;color:#334155}
 
-    .calendar-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 12px;
-    }
+/* Calendar grid */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;max-width:560px}
 
-    .cal-month {
-        margin: 0;
-        flex: 1;
-        text-align: center;
-        font-weight: 700;
-    }
+/* Cells */
+.cell{
+    height:64px;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    background:#fff;
+    padding:8px;
+    position:relative;
+    cursor:pointer;
+}
 
-    /* ✅ This is the main fix: real 7-column calendar grid */
-    .calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 10px;
-        max-width: 520px;
-    }
+.cell:hover{background:#f8fafc}
 
-    /* cells */
-    .calendar-day {
-        height: 64px;
-        border: 1px solid rgba(0,0,0,0.12);
-        border-radius: 12px;
-        background: #fff;
-        padding: 8px;
-        position: relative;
-        cursor: pointer;
-        transition: transform .08s ease, box-shadow .08s ease;
-    }
+/* Day name header cells */
+.cell.head{
+    height:34px;
+    cursor:default;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    font-weight:800;
+    background:#f1f5f9;
+}
 
-        .calendar-day:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-        }
+/* Day number and entry indicator */
+.num{font-weight:800;color:#0f172a}
+.dot{
+    width:8px;height:8px;border-radius:50%;
+    position:absolute;right:10px;bottom:10px;
+    background:#2563eb;
+}
 
-        /* day-name header row */
-        .calendar-day.header {
-            height: 34px;
-            cursor: default;
-            font-weight: 700;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.04);
-        }
+/* Highlight days that have an entry */
+.cell.has{
+    border-color: rgba(37,99,235,.55);
+    box-shadow: 0 0 0 2px rgba(37,99,235,.10) inset;
+}
 
-    /* day number */
-    .day-number {
-        font-weight: 700;
-    }
+/* Buttons (kept simple so it matches other pages) */
+.btn{
+    padding:8px 12px;
+    border-radius:6px;
+    border:1px solid #cbd5f5;
+    background:#f8fafc;
+    cursor:pointer;
+    font-weight:600;
+}
+.btn.secondary:hover{background:#eef2ff}
 
-    /* dot for entry */
-    .entry-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #3b82f6;
-        position: absolute;
-        bottom: 10px;
-        right: 10px;
-    }
-
-    /* highlight cells having entry */
-    .has-entry {
-        border-color: rgba(59,130,246,0.55);
-        box-shadow: 0 0 0 2px rgba(59,130,246,0.12) inset;
-    }
+@@media (max-width:700px){
+    .cal-grid{max-width:100%}
+    .cell{height:56px}
+}
 </style>
 
 @code {
     private DateTime CurrentMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
-    private List<CalendarDay> CalendarDays = new();
+    private readonly List<CalendarDay> CalendarDays = new();
 
-    private readonly string[] DayNames =
-    {
-        "Sun","Mon","Tue","Wed","Thu","Fri","Sat"
-    };
+    private readonly string[] DayNames = { "Sun","Mon","Tue","Wed","Thu","Fri","Sat" };
 
     protected override async Task OnInitializedAsync()
     {
         await LoadCalendar();
     }
 
+    /*  marking the dates that have an entry */
     private async Task LoadCalendar()
     {
         CalendarDays.Clear();
@@ -140,10 +127,10 @@
         var entries = await Database.GetEntriesAsync();
         var entryDates = entries.Select(e => e.EntryDate.Date).ToHashSet();
 
-        var firstDayOfMonth = new DateTime(CurrentMonth.Year, CurrentMonth.Month, 1);
+        var firstDay = new DateTime(CurrentMonth.Year, CurrentMonth.Month, 1);
         var daysInMonth = DateTime.DaysInMonth(CurrentMonth.Year, CurrentMonth.Month);
 
-        int startOffset = (int)firstDayOfMonth.DayOfWeek;
+        var startOffset = (int)firstDay.DayOfWeek;
 
         for (int i = 0; i < startOffset; i++)
             CalendarDays.Add(new CalendarDay());
@@ -151,16 +138,31 @@
         for (int day = 1; day <= daysInMonth; day++)
         {
             var date = new DateTime(CurrentMonth.Year, CurrentMonth.Month, day);
-            CalendarDays.Add(new CalendarDay { Date = date, HasEntry = entryDates.Contains(date) });
+            CalendarDays.Add(new CalendarDay
+            {
+                Date = date,
+                HasEntry = entryDates.Contains(date)
+            });
         }
     }
 
-    private async Task PreviousMonth() { CurrentMonth = CurrentMonth.AddMonths(-1); await LoadCalendar(); }
-    private async Task NextMonth() { CurrentMonth = CurrentMonth.AddMonths(1); await LoadCalendar(); }
+    /* Month navigation */
+    private async Task PreviousMonth()
+    {
+        CurrentMonth = CurrentMonth.AddMonths(-1);
+        await LoadCalendar();
+    }
 
+    private async Task NextMonth()
+    {
+        CurrentMonth = CurrentMonth.AddMonths(1);
+        await LoadCalendar();
+    }
+
+    /* Opens the edit page for the selected date */
     private void OpenDay(DateTime? date)
     {
-        if (date == null) return;
+        if (date is null) return;
         Nav.NavigateTo($"/journal/edit/{date:yyyy-MM-dd}");
     }
 

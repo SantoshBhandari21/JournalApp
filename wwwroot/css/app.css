@@ -1,8 +1,4 @@
-﻿/* =========================================================
-   APP UI SYSTEM (Global)
-   - Purpose: Keep a clean, uniform look across all pages.
-   - Use these classes instead of writing per-page random CSS.
-   ========================================================= */
+﻿/* APP UI SYSTEM (Global) */
 
 :root {
     --bg: #0b1220;

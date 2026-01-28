@@ -9,134 +9,101 @@ namespace JournalApp.Services
 
         public DatabaseService()
         {
-            var dbPath = Path.Combine(
-                FileSystem.AppDataDirectory,
-                "journal.db");
-
+            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "journal.db");
             _db = new SQLiteAsyncConnection(dbPath);
 
-            // Create table if it does not exist
             _db.CreateTableAsync<JournalEntry>().Wait();
         }
 
-        // ---------------------------------------
-        // READ: Get all journal entries
-        // ---------------------------------------
-        public async Task<List<JournalEntry>> GetEntriesAsync()
+        /* Read helpers used by dashboard, list page, calendar and editor pages */
+        public Task<List<JournalEntry>> GetEntriesAsync()
         {
-            return await _db
-                .Table<JournalEntry>()
-                .OrderByDescending(e => e.EntryDate)
-                .ToListAsync();
+            return _db.Table<JournalEntry>()
+                      .OrderByDescending(e => e.EntryDate)
+                      .ToListAsync();
         }
 
-        // ---------------------------------------
-        // READ: Get a single entry by date
-        // ---------------------------------------
-        public async Task<JournalEntry?> GetEntryByDateAsync(DateTime date)
+        public Task<List<JournalEntry>> GetEntriesByDateRangeAsync(DateTime startDate, DateTime endDate)
         {
-            return await _db
-                .Table<JournalEntry>()
-                .FirstOrDefaultAsync(e => e.EntryDate == date.Date);
+            var s = startDate.Date;
+            var e = endDate.Date;
+
+            return _db.Table<JournalEntry>()
+                      .Where(x => x.EntryDate >= s && x.EntryDate <= e)
+                      .OrderBy(x => x.EntryDate)
+                      .ToListAsync();
         }
 
-        // --------------------------------------------------
-        // CREATE or UPDATE (One journal entry per day)
-        // Used by JournalPage.razor
-        // --------------------------------------------------
+        public Task<JournalEntry?> GetEntryByDateAsync(DateTime date)
+        {
+            var d = date.Date;
+
+            return _db.Table<JournalEntry>()
+                      .FirstOrDefaultAsync(x => x.EntryDate == d);
+        }
+
+        public async Task<bool> EntryExistsAsync(DateTime date)
+        {
+            var d = date.Date;
+
+            return await _db.Table<JournalEntry>()
+                            .Where(x => x.EntryDate == d)
+                            .CountAsync() > 0;
+        }
+
+        /* Save logic for one-entry-per-day: insert if missing, otherwise update that day's entry */
         public async Task SaveEntryAsync(JournalEntry entry)
         {
             var existing = await GetEntryByDateAsync(entry.EntryDate);
 
-            if (existing == null)
+            if (existing is null)
             {
+                entry.EntryDate = entry.EntryDate.Date;
                 entry.CreatedAt = DateTime.Now;
                 entry.UpdatedAt = DateTime.Now;
-
                 await _db.InsertAsync(entry);
-            }
-            else
-            {
-                existing.Title = entry.Title;
-                existing.Content = entry.Content;
-                existing.PrimaryMood = entry.PrimaryMood;
-                existing.SecondaryMood1 = entry.SecondaryMood1;
-                existing.SecondaryMood2 = entry.SecondaryMood2;
-                existing.Tags = entry.Tags;
-                existing.UpdatedAt = DateTime.Now;
-
-                await _db.UpdateAsync(existing);
-            }
-        }
-
-        // --------------------------------------------------
-        // UPDATE: Explicit update (EditJournalPage)
-        // --------------------------------------------------
-        public async Task UpdateEntryAsync(JournalEntry entry)
-        {
-            var existing = await GetEntryByDateAsync(entry.EntryDate);
-
-            if (existing == null)
                 return;
+            }
 
-            existing.Title = entry.Title;
-            existing.Content = entry.Content;
-            existing.PrimaryMood = entry.PrimaryMood;
-            existing.SecondaryMood1 = entry.SecondaryMood1;
-            existing.SecondaryMood2 = entry.SecondaryMood2;
-            existing.Tags = entry.Tags;
+            CopyEditableFields(existing, entry);
             existing.UpdatedAt = DateTime.Now;
-
             await _db.UpdateAsync(existing);
         }
 
-        // ---------------------------------------
-        // DELETE: Delete entry by date
-        // ---------------------------------------
+        /* Explicit update used by the edit page */
+        public async Task UpdateEntryAsync(JournalEntry entry)
+        {
+            var existing = await GetEntryByDateAsync(entry.EntryDate);
+            if (existing is null) return;
+
+            CopyEditableFields(existing, entry);
+            existing.UpdatedAt = DateTime.Now;
+            await _db.UpdateAsync(existing);
+        }
+
+        /* Delete operations used by list page and settings */
         public async Task DeleteEntryAsync(DateTime date)
         {
             var entry = await GetEntryByDateAsync(date);
+            if (entry is null) return;
 
-            if (entry != null)
-            {
-                await _db.DeleteAsync(entry);
-            }
+            await _db.DeleteAsync(entry);
         }
 
-        // ---------------------------------------
-        // DELETE: Delete ALL entries (Settings)
-        // ---------------------------------------
-        public async Task DeleteAllEntriesAsync()
+        public Task DeleteAllEntriesAsync()
         {
-            await _db.DeleteAllAsync<JournalEntry>();
+            return _db.DeleteAllAsync<JournalEntry>();
         }
 
-        // ---------------------------------------
-        // EXTRA / SUPPORTING METHODS
-        // ---------------------------------------
-
-        // Get entries within a date range (PDF export, analytics)
-        public async Task<List<JournalEntry>> GetEntriesByDateRangeAsync(
-            DateTime startDate,
-            DateTime endDate)
+        /* Keeps field updates consistent across save and update */
+        private static void CopyEditableFields(JournalEntry target, JournalEntry source)
         {
-            return await _db
-                .Table<JournalEntry>()
-                .Where(e => e.EntryDate >= startDate.Date &&
-                            e.EntryDate <= endDate.Date)
-                .OrderBy(e => e.EntryDate)
-                .ToListAsync();
-        }
-
-        // Check if entry exists for a specific date
-        public async Task<bool> EntryExistsAsync(DateTime date)
-        {
-            var count = await _db
-                .Table<JournalEntry>()
-                .Where(e => e.EntryDate == date.Date)
-                .CountAsync();
-
-            return count > 0;
+            target.Title = source.Title;
+            target.Content = source.Content;
+            target.PrimaryMood = source.PrimaryMood;
+            target.SecondaryMood1 = source.SecondaryMood1;
+            target.SecondaryMood2 = source.SecondaryMood2;
+            target.Tags = source.Tags;
         }
     }
 }

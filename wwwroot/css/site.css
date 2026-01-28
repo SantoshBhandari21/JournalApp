@@ -1,17 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace JournalApp.wwwroot.css {
-    class site
-
-{
-}
-
-
-.bar-row {
+﻿.bar-row {
     display: grid;
     grid-template-columns: 120px 1fr 60px;
     align-items: center;
