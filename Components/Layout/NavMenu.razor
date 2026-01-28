@@ -10,17 +10,15 @@
     <NavLink href="/calendar" class="nav-item">Calendar</NavLink>
     <NavLink href="/settings" class="nav-item">Settings</NavLink>
 
-    <!-- Theme option styled like a normal menu item -->
-    <div class="nav-item theme-toggle">
-        <span>Theme</span>
-        <button class="theme-btn" type="button" @onclick="ToggleTheme">
+    <div class="theme-toggle">
+        <span class="theme-text">Theme</span>
+        <button class="btn-theme" type="button" @onclick="ToggleTheme">
             @(IsDarkTheme ? "Light" : "Dark")
         </button>
     </div>
 </nav>
 
 <style>
-    /* Sidebar layout */
     .sidebar {
         width: 220px;
         height: 100vh;
@@ -29,54 +27,55 @@
         color: white;
         display: flex;
         flex-direction: column;
+        padding: 20px;
     }
 
-    /* App title */
     .logo {
-        margin-bottom: 30px;
-        font-size: 22px;
-        font-weight: bold;
-        color: #ffffff;
+        margin: 0 0 20px 0;
+        font-size: 20px;
+        font-weight: 700;
     }
 
-    /* Nav links */
     .nav-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 14px;
-        margin-bottom: 10px;
-        color: #e5e7eb;
+        display: block;
+        color: white;
         text-decoration: none;
-        border-radius: 6px;
-        font-weight: 500;
-        cursor: pointer;
+        padding: 10px 12px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        transition: background-color 0.2s ease;
     }
 
         .nav-item:hover {
-            background-color: #13294b;
+            background-color: rgba(255, 255, 255, 0.12);
         }
 
         .nav-item.active {
-            background-color: #1e3a8a;
-            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.18);
+            font-weight: 600;
         }
 
-    /* Theme button inside menu row */
-    .theme-btn {
-        border: none;
-        background: rgba(255,255,255,0.15);
-        color: inherit;
-        border-radius: 6px;
-        padding: 4px 10px;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
+    .theme-toggle {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
     }
 
-        .theme-btn:hover {
-            background: rgba(255,255,255,0.25);
-        }
+    .theme-text {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+
+    .btn-theme {
+        border: none;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+    }
 </style>
 
 @code {
@@ -87,11 +86,12 @@
         IsDarkTheme = Preferences.Get("dark_theme", false);
     }
 
-    /* Toggles the saved theme and notifies the UI through JavaScript */
     private async Task ToggleTheme()
     {
         IsDarkTheme = !IsDarkTheme;
+
         Preferences.Set("dark_theme", IsDarkTheme);
+
         await JS.InvokeVoidAsync("toggleTheme", IsDarkTheme);
     }
 }

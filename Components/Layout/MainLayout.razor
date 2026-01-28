@@ -10,7 +10,7 @@
 </div>
 
 <style>
-    /* Main layout structure and content area styling */
+    /* Main layout structure and content */
     .layout {
         display: flex;
         height: 100vh;
@@ -24,19 +24,17 @@
         transition: background-color 0.3s ease;
     }
 
-    /* Light and dark theme background handling */
     body:not(.dark-theme) .content {
         background-color: #f9f9f9;
     }
 
     body.dark-theme .content {
-        background-color: #0f172a;
+        background-color: #222f4f;
     }
 
 </style>
 
 @code {
-    /* Applying saved theme once when the app first loads */
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)

@@ -7,7 +7,7 @@ namespace JournalApp.Services
 {
     public class PdfExportService
     {
-        /* Generate a PDF file from journal entries and return the saved file path */
+        /* Generate a PDF file from journal entries and gives the saved file path */
         public string ExportJournalsToPdf(
             List<JournalEntry> entries,
             DateTime from,
