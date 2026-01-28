@@ -10,115 +10,73 @@
     <NavLink href="/calendar" class="nav-item">Calendar</NavLink>
     <NavLink href="/settings" class="nav-item">Settings</NavLink>
 
-    <div class="theme-toggle">
-        <span class="theme-text">Theme</span>
-        <button class="btn-theme" type="button" @onclick="ToggleTheme">
+    <!-- Theme option styled like a normal menu item -->
+    <div class="nav-item theme-toggle">
+        <span>Theme</span>
+        <button class="theme-btn" type="button" @onclick="ToggleTheme">
             @(IsDarkTheme ? "Light" : "Dark")
         </button>
     </div>
 </nav>
 
 <style>
-/* Sidebar layout */
-.sidebar {
-    width: 220px;
-    height: 100vh;
-    background-color: #0a1930;
-    box-sizing: border-box;
-    color: white;
-    display: flex;
-    flex-direction: column;
-}
-
-/* App title */
-.logo {
-    margin-bottom: 30px;
-    font-size: 22px;
-    font-weight: bold;
-    color: #ffffff;
-}
-
-/* Nav links */
-.nav-item {
-    display: block;
-    padding: 12px 14px;
-    margin-bottom: 10px;
-    color: #e5e7eb;
-    text-decoration: none;
-    border-radius: 6px;
-    font-weight: 500;
-}
-
-    .nav-item:hover {
-        background-color: #13294b;
+    /* Sidebar layout */
+    .sidebar {
+        width: 220px;
+        height: 100vh;
+        background-color: #0a1930;
+        box-sizing: border-box;
+        color: white;
+        display: flex;
+        flex-direction: column;
     }
 
-    .nav-item.active {
-        background-color: #1e3a8a; 
+    /* App title */
+    .logo {
+        margin-bottom: 30px;
+        font-size: 22px;
+        font-weight: bold;
         color: #ffffff;
     }
 
-/* Theme toggle area */
-.theme-toggle {
-    margin-top: auto;
-    padding-top: 14px;
-    border-top: 1px solid rgba(255,255,255,0.18);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    color: #e5e7eb;
-}
-
-.theme-text {
-    font-weight: 600;
-    font-size: 14px;
-    opacity: 0.95;
-}
-
-/* Switch */
-.switch {
-    position: relative;
-    width: 44px;
-    height: 24px;
-    display: inline-block;
-}
-
-    .switch input {
-        display: none;
+    /* Nav links */
+    .nav-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+        color: #e5e7eb;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
     }
 
-.slider {
-    position: absolute;
-    inset: 0;
-    background: rgba(255,255,255,0.20);
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 999px;
-    cursor: pointer;
-    transition: .15s;
-}
+        .nav-item:hover {
+            background-color: #13294b;
+        }
 
-    .slider:before {
-        content: "";
-        position: absolute;
-        width: 18px;
-        height: 18px;
-        left: 3px;
-        top: 2.5px;
-        background: #ffffff;
-        border-radius: 50%;
-        transition: .15s;
+        .nav-item.active {
+            background-color: #1e3a8a;
+            color: #ffffff;
+        }
+
+    /* Theme button inside menu row */
+    .theme-btn {
+        border: none;
+        background: rgba(255,255,255,0.15);
+        color: inherit;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
     }
 
-.switch input:checked + .slider {
-    background: #2563eb; 
-    border-color: #2563eb;
-}
-
-    .switch input:checked + .slider:before {
-        transform: translateX(20px);
-    }
-
+        .theme-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
 </style>
 
 @code {

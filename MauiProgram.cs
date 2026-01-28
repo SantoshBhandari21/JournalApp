@@ -15,7 +15,6 @@ namespace JournalApp
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
-
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddSingleton<DatabaseService>();
             builder.Services.AddSingleton<PdfExportService>();
