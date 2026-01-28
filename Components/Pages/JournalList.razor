@@ -4,7 +4,6 @@
 @inject JournalApp.Services.PdfExportService PdfService
 @inject NavigationManager Nav
 
-<!-- Page header and filter controls -->
 <div class="page">
     <div class="head">
         <h2 class="title">Journal List</h2>
@@ -47,7 +46,6 @@
         }
     </div>
 
-    <!-- Results table -->
     @if (FilteredEntries.Count == 0)
     {
         <div class="card" style="margin-top:14px;">
@@ -67,7 +65,7 @@
                 </thead>
 
                 <tbody>
-                    @foreach (var entry in FilteredEntries)
+                    @foreach (var entry in PagedEntries)
                     {
                         <tr>
                             <td class="mono">@entry.EntryDate.ToString("yyyy-MM-dd")</td>
@@ -83,12 +81,22 @@
                     }
                 </tbody>
             </table>
+
+            <div class="pager">
+                <button class="btn" type="button" @onclick="PrevPage" disabled="@IsFirstPage">Prev</button>
+
+                <div class="pageinfo">
+                    Page @CurrentPage of @TotalPages
+                    <span class="count">(@FilteredEntries.Count total)</span>
+                </div>
+
+                <button class="btn" type="button" @onclick="NextPage" disabled="@IsLastPage">Next</button>
+            </div>
         </div>
     }
 </div>
 
 <style>
-    /* Page layout */
     .page {
         max-width: 1100px;
         margin: 0 auto;
@@ -112,7 +120,6 @@
         font-weight: 600
     }
 
-    /* Cards and controls */
     .card {
         background: #fff;
         border: 1px solid #e2e8f0;
@@ -173,7 +180,12 @@
             transform: translateY(-1px)
         }
 
-    /* Messages */
+        .btn:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+            transform: none
+        }
+
     .msg {
         margin-top: 10px;
         padding: 10px 12px;
@@ -190,7 +202,6 @@
         font-weight: 700
     }
 
-    /* Table */
     .tbl {
         width: 100%;
         border-collapse: separate;
@@ -244,7 +255,27 @@
         justify-content: flex-start
     }
 
-    /* Mobile adjustments */
+    .pager {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+        gap: 10px;
+    }
+
+    .pageinfo {
+        font-weight: 900;
+        color: #334155;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .count {
+        font-weight: 800;
+        color: #64748b;
+    }
+
     @@media (max-width:900px) {
         .topbar {
             flex-direction: column;
@@ -284,6 +315,11 @@
                 border-bottom-right-radius: 14px;
                 border-top-right-radius: 0
             }
+
+        .pager {
+            flex-direction: column;
+            align-items: stretch
+        }
     }
 </style>
 
@@ -298,6 +334,9 @@
     private string SelectedTag = "";
     private string SelectedDateRange = "All";
 
+    private int PageSize = 5;
+    private int CurrentPage = 1;
+
     private readonly List<string> AllMoods = new()
     {
         "Happy","Excited","Relaxed","Grateful",
@@ -307,13 +346,23 @@
 
     private List<string> AllTags = new();
 
+    private int TotalPages =>
+        Math.Max(1, (int)Math.Ceiling(FilteredEntries.Count / (double)PageSize));
+
+    private bool IsFirstPage => CurrentPage <= 1;
+    private bool IsLastPage => CurrentPage >= TotalPages;
+
+    private IEnumerable<JournalEntry> PagedEntries =>
+        FilteredEntries
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize);
+
     protected override async Task OnInitializedAsync()
     {
         await ReloadEntries();
         ApplyFilters();
     }
 
-    /* Loads all entries and prepares tag dropdown values */
     private async Task ReloadEntries()
     {
         AllEntries = await Database.GetEntriesAsync();
@@ -328,10 +377,10 @@
             .ToList();
     }
 
-    /* Applies search and filter options to the full list */
     private void ApplyFilters()
     {
         ExportMessage = "";
+        CurrentPage = 1;
 
         IEnumerable<JournalEntry> q = AllEntries;
 
@@ -360,9 +409,23 @@
         }
 
         FilteredEntries = q.OrderByDescending(e => e.EntryDate).ToList();
+
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
     }
 
-    /* Entry actions for edit, delete, and PDF export */
+    private void NextPage()
+    {
+        if (!IsLastPage)
+            CurrentPage++;
+    }
+
+    private void PrevPage()
+    {
+        if (!IsFirstPage)
+            CurrentPage--;
+    }
+
     private void EditEntry(DateTime date)
     {
         Nav.NavigateTo($"/journal/edit/{date:yyyy-MM-dd}");
@@ -373,6 +436,9 @@
         await Database.DeleteEntryAsync(date);
         await ReloadEntries();
         ApplyFilters();
+
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
     }
 
     private void ExportSingle(JournalEntry entry)
